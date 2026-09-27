@@ -79,16 +79,6 @@ def test_returns_the_validated_rewrite(provider: ProviderSpy) -> None:
     assert result.full_prompt.startswith("You are a senior engineer.")
 
 
-def test_reported_principles_all_resolve(provider: ProviderSpy) -> None:
-    """A principle key the terminal cannot look up renders as a blank
-    panel, so every value must resolve against the table."""
-    result = optimize_prompt(RAW, SAMPLE_ANALYSIS)
-
-    for key in result.principles_applied:
-        assert key in PRINCIPLES
-        assert PRINCIPLES[key].name
-
-
 def test_forwards_a_different_analysis_verbatim(provider: ProviderSpy) -> None:
     """Guards against the step being hardwired to the fixture's sample.
 

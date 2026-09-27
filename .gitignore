@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.python-version
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+optimized.md
+saved/
+*.log
+.DS_Store

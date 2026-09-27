@@ -1,0 +1,33 @@
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prompt-optimizer"
+version = "0.1.0"
+description = "CLI tool to optimize prompts following best practices using Groq"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain-groq>=1.1.0",
+    "langchain-core>=0.3.0",
+    "rich>=13.0.0",
+    "click>=8.0.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.scripts]
+prompt-optimizer = "cli:cli"
+
+[tool.setuptools]
+py-modules = ["cli", "config", "llm", "storage", "analyzer", "optimizer", "principles", "schemas"]
+
+[dependency-groups]
+dev = ["pytest>=8.0.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

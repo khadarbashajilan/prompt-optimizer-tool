@@ -23,11 +23,11 @@ dependencies = [
 [project.scripts]
 prompt-optimizer = "prompt_optimizer.cli:cli"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = ["prompt_optimizer"]
 
 [tool.setuptools.package-dir]
-"" = "src"
+prompt_optimizer = "src"
 
 [dependency-groups]
 dev = ["pytest>=8.0.0"]

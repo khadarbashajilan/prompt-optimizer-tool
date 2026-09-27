@@ -8,6 +8,7 @@ severity onto a terminal colour.
 
 import sys
 from pathlib import Path
+from typing import Any, Callable
 
 import click
 from rich import box
@@ -15,8 +16,12 @@ from rich.columns import Columns
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
+from rich.theme import Theme
+from rich.traceback import install as install_traceback
 
 from .analyzer import analyze_prompt
 from .config import DEFAULT_OUTPUT_DIR, MissingAPIKeyError
@@ -25,7 +30,14 @@ from .principles import PRINCIPLES, principle_name
 from .schemas import OptimizedPrompt, PromptAnalysis, Severity
 from .storage import new_output_path, write_output
 
-console = Console()
+THEME = Theme({
+    "brand": "bold cyan",
+    "good": "bold green",
+    "warn": "bold yellow",
+    "bad": "bold red",
+})
+
+console = Console(theme=THEME)
 
 USAGE_HINT = """Usage: prompt-optimizer optimize [PROMPT]
    or: prompt-optimizer optimize --file prompt.txt
@@ -124,9 +136,9 @@ def render_optimized(optimized: OptimizedPrompt) -> None:
 
 def render_principles() -> None:
     """Print the table of all prompting principles."""
+    console.print(Rule("[bold brand]Prompt Engineering Principles[/]", style="brand"))
     table = Table(
         box=box.SIMPLE,
-        title="Prompt Engineering Principles",
         title_style="bold cyan",
     )
     table.add_column("Key", style="bold green")
@@ -165,6 +177,19 @@ def read_prompt(prompt: str | None, filepath: str | None) -> str | None:
     return None
 
 
+def _run_step(description: str, step: Callable[[], Any]) -> Any:
+    """Run one pipeline step under an indeterminate progress spinner."""
+    with Progress(
+        SpinnerColumn(style="brand"),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
+        task = progress.add_task(description, total=None)
+        result = step()
+        progress.update(task, completed=1)
+        return result
+
+
 def run(prompt: str, output_dir: str) -> Path | None:
     """Analyze, then optimize, then render and save the result.
 
@@ -176,32 +201,30 @@ def run(prompt: str, output_dir: str) -> Path | None:
         The file the rewrite was saved to, or None if a step failed.
     """
     console.print(Panel(prompt, title="Original Prompt", border_style="bright_black"))
+    console.print(Rule(style="dim"))
 
     try:
-        with console.status("Analyzing prompt..."):
-            analysis = analyze_prompt(prompt)
+        analysis = _run_step("[bold cyan]Analyzing prompt...", lambda: analyze_prompt(prompt))
     except MissingAPIKeyError as error:
-        console.print(f"[red]Error:[/red] {error}")
+        console.print(f"[bad]Error:[/bad] {error}")
         return None
     except Exception as error:
-        console.print(f"[red]API Error:[/red] {error}")
+        console.print(f"[bad]API Error:[/bad] {error}")
         return None
 
-    console.print()
     render_analysis(analysis)
     console.print()
 
     try:
-        with console.status("Optimizing prompt..."):
-            optimized = optimize_prompt(prompt, analysis)
+        optimized = _run_step("[bold green]Optimizing prompt...", lambda: optimize_prompt(prompt, analysis))
     except Exception as error:
-        console.print(f"[red]Optimization Error:[/red] {error}")
+        console.print(f"[bad]Optimization Error:[/bad] {error}")
         return None
 
     render_optimized(optimized)
 
     path = write_output(optimized.full_prompt, new_output_path(output_dir))
-    console.print(f"\n[green]Saved to[/green] [bold]{path}[/bold]")
+    console.print(f"\n[good]Saved to[/good] [bold]{path}[/bold]")
     return path
 
 
@@ -224,6 +247,7 @@ def cli(ctx: click.Context) -> None:
 
         echo "explain AI" | prompt-optimizer optimize
     """
+    install_traceback(console=console, show_locals=False)
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         ctx.exit()

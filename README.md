@@ -105,8 +105,8 @@ Defined once in `principles.py` and reused everywhere:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/khadarbashajilan/prompt-optimizer.git
-cd prompt-optimizer
+git clone https://github.com/khadarbashajilan/prompt-optimizer-tool.git
+cd prompt-optimizer-tool
 
 # 2. Set your Groq API key (free, no credit card: https://console.groq.com/keys)
 cp .env.example .env

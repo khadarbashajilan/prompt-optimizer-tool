@@ -6,9 +6,9 @@ the exact weaknesses that were found instead of re-guessing them.
 
 from langchain_core.prompts import ChatPromptTemplate
 
-from llm import structured_llm
-from principles import OPTIMIZER_SYSTEM_PROMPT
-from schemas import OptimizedPrompt, PromptAnalysis
+from .llm import structured_llm
+from .principles import OPTIMIZER_SYSTEM_PROMPT
+from .schemas import OptimizedPrompt, PromptAnalysis
 
 HUMAN_MESSAGE = "Original prompt:\n\n{original}\n\nAnalysis:\n{analysis}"
 

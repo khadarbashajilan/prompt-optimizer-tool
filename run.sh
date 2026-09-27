@@ -21,7 +21,9 @@ elif command -v uv >/dev/null 2>&1; then
     uv sync
     cli() { uv run prompt-optimizer "$@"; }
 elif [ -x .venv/bin/python ]; then
-    cli() { .venv/bin/python cli.py "$@"; }
+    # PYTHONPATH=src so this works even if the project was never installed
+    # into that virtualenv.
+    cli() { PYTHONPATH=src .venv/bin/python -m prompt_optimizer.cli "$@"; }
 else
     echo "No runner found."
     echo "Install uv: https://docs.astral.sh/uv/getting-started/installation/"

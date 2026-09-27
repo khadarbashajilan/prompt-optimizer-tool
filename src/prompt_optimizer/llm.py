@@ -11,7 +11,7 @@ from langchain_core.runnables import Runnable
 from langchain_groq import ChatGroq
 from pydantic import BaseModel
 
-from config import (
+from .config import (
     MAX_RETRIES,
     MAX_TOKENS,
     MODEL,

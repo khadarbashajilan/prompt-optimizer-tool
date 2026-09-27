@@ -7,9 +7,9 @@ and the model setup in llm.py.
 
 from langchain_core.prompts import ChatPromptTemplate
 
-from llm import structured_llm
-from principles import ANALYSIS_SYSTEM_PROMPT
-from schemas import PromptAnalysis
+from .llm import structured_llm
+from .principles import ANALYSIS_SYSTEM_PROMPT
+from .schemas import PromptAnalysis
 
 HUMAN_MESSAGE = "Analyze this prompt:\n\n{prompt}"
 

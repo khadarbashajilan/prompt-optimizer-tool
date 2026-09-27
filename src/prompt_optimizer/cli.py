@@ -18,12 +18,12 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from analyzer import analyze_prompt
-from config import DEFAULT_OUTPUT_DIR, MissingAPIKeyError
-from optimizer import optimize_prompt
-from principles import PRINCIPLES, principle_name
-from schemas import OptimizedPrompt, PromptAnalysis, Severity
-from storage import new_output_path, write_output
+from .analyzer import analyze_prompt
+from .config import DEFAULT_OUTPUT_DIR, MissingAPIKeyError
+from .optimizer import optimize_prompt
+from .principles import PRINCIPLES, principle_name
+from .schemas import OptimizedPrompt, PromptAnalysis, Severity
+from .storage import new_output_path, write_output
 
 console = Console()
 

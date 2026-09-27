@@ -11,7 +11,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from principles import PrincipleKey
+from .principles import PrincipleKey
 
 Severity = Literal["critical", "major", "minor"]
 

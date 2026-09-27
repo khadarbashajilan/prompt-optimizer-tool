@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from cli import score_colour, severity_style
-from principles import PRINCIPLES, PrincipleKey, principle_name
-from schemas import OptimizedPrompt, PromptAnalysis, PromptWeakness
-from storage import new_output_path, write_output
+from prompt_optimizer.cli import score_colour, severity_style
+from prompt_optimizer.principles import PRINCIPLES, PrincipleKey, principle_name
+from prompt_optimizer.schemas import OptimizedPrompt, PromptAnalysis, PromptWeakness
+from prompt_optimizer.storage import new_output_path, write_output
 
 
 # --- score and severity presentation -------------------------------------

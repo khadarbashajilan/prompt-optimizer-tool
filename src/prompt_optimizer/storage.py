@@ -8,7 +8,7 @@ chronologically and makes the right one easy to find later.
 from datetime import datetime
 from pathlib import Path
 
-from config import DEFAULT_OUTPUT_DIR
+from .config import DEFAULT_OUTPUT_DIR
 
 TIMESTAMP_FORMAT = "%Y%m%d-%H%M%S"
 

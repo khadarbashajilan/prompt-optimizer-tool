@@ -107,7 +107,7 @@ Published on PyPI as [`prompt-optimizer-tool`](https://pypi.org/project/prompt-o
 
 ```bash
 # Try it instantly, nothing is installed
-uvx prompt-optimizer list
+uvx --from prompt-optimizer-tool prompt-optimizer list
 
 # Install as an isolated tool (recommended)
 uv tool install prompt-optimizer-tool

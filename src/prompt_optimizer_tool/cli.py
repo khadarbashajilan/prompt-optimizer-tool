@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import click
+from groq import RateLimitError
 from rich import box
 from rich.columns import Columns
 from rich.console import Console
@@ -42,6 +43,23 @@ console = Console(theme=THEME)
 USAGE_HINT = """Usage: prompt-optimizer optimize [PROMPT]
    or: prompt-optimizer optimize --file prompt.txt
    or: cat prompt.txt | prompt-optimizer optimize"""
+
+
+def describe_error(error: Exception) -> str:
+    """Turn a pipeline failure into a message a user can act on.
+
+    Groq's free tier caps requests and tokens per minute and per day. The
+    client already retried before this point, so a RateLimitError that
+    reaches here means waiting is the only fix.
+    """
+    if isinstance(error, RateLimitError):
+        wait = error.response.headers.get("retry-after")
+        hint = f"Try again in about {wait} seconds." if wait else "Wait a minute and try again."
+        return (
+            "Groq rate limit reached (the free tier caps requests and tokens "
+            f"per minute and per day). {hint}"
+        )
+    return str(error)
 
 
 def score_colour(score: int) -> str:
@@ -211,7 +229,7 @@ def run(prompt: str, output_dir: str) -> Path | None:
         console.print(f"[bad]Error:[/bad] {error}")
         return None
     except Exception as error:
-        console.print(f"[bad]API Error:[/bad] {error}")
+        console.print(f"[bad]API Error:[/bad] {describe_error(error)}")
         return None
 
     render_analysis(analysis)
@@ -220,7 +238,7 @@ def run(prompt: str, output_dir: str) -> Path | None:
     try:
         optimized = _run_step("[bold green]Optimizing prompt...", lambda: optimize_prompt(prompt, analysis))
     except Exception as error:
-        console.print(f"[bad]Optimization Error:[/bad] {error}")
+        console.print(f"[bad]Optimization Error:[/bad] {describe_error(error)}")
         return None
 
     render_optimized(optimized)

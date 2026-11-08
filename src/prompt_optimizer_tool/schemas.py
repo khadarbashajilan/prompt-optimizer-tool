@@ -36,8 +36,12 @@ class PromptAnalysis(BaseModel):
     """Result of analyzing a prompt for quality."""
 
     score: int = Field(ge=0, le=100, description="Overall quality score 0-100")
-    weaknesses: list[PromptWeakness] = Field(description="Identified issues")
-    strengths: list[str] = Field(description="What the prompt does well")
+    weaknesses: list[PromptWeakness] = Field(
+        default_factory=list, description="Identified issues; empty if none"
+    )
+    strengths: list[str] = Field(
+        default_factory=list, description="What the prompt does well; empty if none"
+    )
 
 
 class OptimizedPrompt(BaseModel):

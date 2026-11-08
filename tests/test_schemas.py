@@ -7,7 +7,7 @@ that is not validated here is a constraint nothing enforces at runtime.
 import pytest
 
 from prompt_optimizer_tool.principles import PRINCIPLES
-from prompt_optimizer_tool.schemas import OptimizedPrompt, PromptWeakness
+from prompt_optimizer_tool.schemas import OptimizedPrompt, PromptAnalysis, PromptWeakness
 
 from support import analysis, optimized
 
@@ -47,3 +47,9 @@ def test_principles_applied_only_contains_real_principles() -> None:
 def test_optimized_rejects_unknown_principle_keys() -> None:
     with pytest.raises(ValueError):
         optimized(principles_applied=["vibes"])
+
+
+def test_analysis_without_weaknesses_or_strengths_is_valid():
+    """Regression: the model omits empty lists for a strong prompt."""
+    result = PromptAnalysis.model_validate({"score": 92})
+    assert result.weaknesses == [] and result.strengths == []

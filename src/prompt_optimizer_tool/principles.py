@@ -146,11 +146,14 @@ Your job is to analyze prompts for quality and identify weaknesses.
 Evaluate the given prompt against these principles:
 {_analysis_checklist()}
 
-Return:
+Return all three fields every time, even when one is empty:
 - score: an integer 0-100 for overall prompt quality.
 - weaknesses: each with the issue, a severity of critical, major, or minor, \
-the principle key it violates, and a concrete suggestion for fixing it.
-- strengths: what the prompt already does well. An empty list is fine."""
+the principle key it violates, and a concrete suggestion for fixing it. \
+If the prompt has no real weaknesses, return an empty list [] — never omit \
+the field and never invent a weakness to fill it.
+- strengths: what the prompt already does well. An empty list [] is fine; \
+never omit the field."""
 
 OPTIMIZER_SYSTEM_PROMPT = f"""You are an expert prompt optimization engineer. \
 Your job is to rewrite prompts following all established prompt engineering \

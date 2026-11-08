@@ -145,3 +145,39 @@ def test_score_colour_thresholds() -> None:
 def test_every_severity_has_a_style() -> None:
     for severity in ("critical", "major", "minor"):
         assert cli.severity_style(severity)
+
+
+def rate_limit_error(retry_after: str | None) -> Exception:
+    import httpx
+    from groq import RateLimitError
+
+    headers = {"retry-after": retry_after} if retry_after else {}
+    response = httpx.Response(
+        429, headers=headers, request=httpx.Request("POST", "https://api.groq.com")
+    )
+    return RateLimitError("429 raw payload", response=response, body=None)
+
+
+@pytest.mark.parametrize("step", ["analysis_error", "optimize_error"])
+def test_rate_limit_is_explained_with_the_wait_time(
+    runner: CliRunner, pipeline, tmp_path: Path, step: str
+) -> None:
+    setattr(pipeline, step, rate_limit_error("42"))
+
+    result = runner.invoke(cli.cli, ["optimize", RAW, "--out", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "free tier" in result.output
+    assert "42 seconds" in result.output
+    assert "429 raw payload" not in result.output
+    assert written(tmp_path) == []
+
+
+def test_rate_limit_without_retry_after_still_gives_advice(
+    runner: CliRunner, pipeline, tmp_path: Path
+) -> None:
+    pipeline.analysis_error = rate_limit_error(None)
+
+    result = runner.invoke(cli.cli, ["optimize", RAW, "--out", str(tmp_path)])
+
+    assert "Wait a minute" in result.output

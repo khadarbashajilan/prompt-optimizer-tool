@@ -36,3 +36,10 @@ def test_both_system_prompts_render_every_principle() -> None:
 def test_principle_names_resolve_and_fall_back_to_the_key() -> None:
     assert principle_name("role") == PRINCIPLES["role"].name
     assert principle_name("not-a-real-key") == "not-a-real-key"
+
+
+def test_analysis_prompt_allows_empty_weaknesses_and_strengths():
+    """Regression: a strong prompt has nothing to list, and the model once
+    dropped the whole `weaknesses` key, which strict decoding rejects."""
+    assert "empty list [] — never omit the field" in ANALYSIS_SYSTEM_PROMPT
+    assert "never omit the field" in ANALYSIS_SYSTEM_PROMPT.split("strengths:")[1]

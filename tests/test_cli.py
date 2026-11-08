@@ -181,3 +181,30 @@ def test_rate_limit_without_retry_after_still_gives_advice(
     result = runner.invoke(cli.cli, ["optimize", RAW, "--out", str(tmp_path)])
 
     assert "Wait a minute" in result.output
+
+
+def test_setup_saves_key_interactively(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dest = tmp_path / "config.env"
+    monkeypatch.setattr(cli, "save_api_key", lambda key: dest)
+
+    result = runner.invoke(cli.cli, ["setup"], input="gsk_new_secret_key\n")
+
+    assert result.exit_code == 0
+    assert "Success!" in result.output
+    assert str(dest) in result.output
+
+
+def test_setup_rejects_empty_key(runner: CliRunner) -> None:
+    result = runner.invoke(cli.cli, ["setup"], input="\n")
+
+    assert result.exit_code == 1
+    assert "No API key provided" in result.output
+
+
+def test_setup_rejects_placeholder_key(runner: CliRunner) -> None:
+    result = runner.invoke(cli.cli, ["setup"], input="your-groq-api-key-here\n")
+
+    assert result.exit_code == 1
+    assert "Placeholder keys cannot be used" in result.output

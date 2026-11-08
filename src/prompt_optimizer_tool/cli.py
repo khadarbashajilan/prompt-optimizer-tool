@@ -25,7 +25,7 @@ from rich.theme import Theme
 from rich.traceback import install as install_traceback
 
 from .analyzer import analyze_prompt
-from .config import DEFAULT_OUTPUT_DIR, MissingAPIKeyError
+from .config import DEFAULT_OUTPUT_DIR, MissingAPIKeyError, PLACEHOLDER_KEYS, save_api_key
 from .optimizer import optimize_prompt
 from .principles import PRINCIPLES, principle_name
 from .schemas import OptimizedPrompt, PromptAnalysis, Severity
@@ -299,6 +299,27 @@ def optimize(prompt: str | None, filepath: str | None, output_dir: str) -> None:
 def list_principles() -> None:
     """List all available prompting principles."""
     render_principles()
+
+
+@cli.command(name="setup")
+def setup() -> None:
+    """Configure your Groq API key interactively."""
+    console.print(Panel(
+        "A free Groq API key is required (no credit card needed).\n"
+        "Get your key at: [bold cyan]https://console.groq.com/keys[/bold cyan]",
+        title="[brand]Prompt Optimizer Setup[/brand]",
+        border_style="cyan",
+    ))
+    key = click.prompt("Enter your Groq API key", default="", hide_input=True, show_default=False).strip()
+    if not key:
+        console.print("[bad]Error:[/bad] No API key provided.")
+        sys.exit(1)
+    if key in PLACEHOLDER_KEYS:
+        console.print("[bad]Error:[/bad] Placeholder keys cannot be used.")
+        sys.exit(1)
+
+    path = save_api_key(key)
+    console.print(f"[good]Success![/good] API key saved to [bold]{path}[/bold]")
 
 
 if __name__ == "__main__":

@@ -4,9 +4,11 @@ These tests only exercise ``api_key()``; the numeric settings are read once
 at import time and are therefore not re-loadable within a test process.
 """
 
+from pathlib import Path
+
 import pytest
 
-from prompt_optimizer_tool.config import MissingAPIKeyError, api_key
+from prompt_optimizer_tool.config import MissingAPIKeyError, api_key, save_api_key
 
 
 def test_returns_a_stripped_key(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -47,3 +49,12 @@ def test_a_real_looking_key_passes(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "gsk_1a2b3c")
 
     assert api_key() == "gsk_1a2b3c"
+
+
+def test_save_api_key_writes_file_and_sets_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    dest = tmp_path / "sub" / "config.env"
+    saved = save_api_key("  gsk_saved_key  ", destination=dest)
+
+    assert saved == dest
+    assert dest.read_text(encoding="utf-8") == "GROQ_API_KEY=gsk_saved_key\n"
+    assert api_key() == "gsk_saved_key"

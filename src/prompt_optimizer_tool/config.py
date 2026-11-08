@@ -7,12 +7,17 @@ temperature) possible without editing code.
 """
 
 import os
+from pathlib import Path
 
 import dotenv
 
-# Reads .env from the working directory. Must run before any getenv below
-# that expects a value from that file.
+USER_CONFIG_DIR = Path.home() / ".prompt-optimizer"
+USER_CONFIG_FILE = USER_CONFIG_DIR / "config.env"
+
+# Reads .env from the working directory first, then user config if present.
 dotenv.load_dotenv()
+if USER_CONFIG_FILE.exists():
+    dotenv.load_dotenv(USER_CONFIG_FILE)
 
 
 class MissingAPIKeyError(RuntimeError):
@@ -63,6 +68,27 @@ REQUEST_TIMEOUT = _env_float("PROMPT_OPTIMIZER_TIMEOUT", 60.0)
 DEFAULT_OUTPUT_DIR = _env_str("PROMPT_OPTIMIZER_OUTPUT_DIR", "saved")
 
 
+def save_api_key(key: str, destination: Path = USER_CONFIG_FILE) -> Path:
+    """Save key to the user config file with restricted permissions.
+
+    Args:
+        key: The Groq API key to store.
+        destination: Where to write. Defaults to USER_CONFIG_FILE.
+
+    Returns:
+        The path of the written file.
+    """
+    clean_key = key.strip()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(f"GROQ_API_KEY={clean_key}\n", encoding="utf-8")
+    try:
+        destination.chmod(0o600)
+    except OSError:
+        pass
+    os.environ["GROQ_API_KEY"] = clean_key
+    return destination
+
+
 def api_key() -> str:
     """Return the Groq API key from the environment.
 
@@ -76,7 +102,9 @@ def api_key() -> str:
     key = os.getenv("GROQ_API_KEY", "").strip()
     if not key:
         raise MissingAPIKeyError(
-            "GROQ_API_KEY not found. Set it in .env file or export it:\n"
+            "GROQ_API_KEY not found. Configure it with:\n"
+            "  prompt-optimizer setup\n"
+            "or set it in .env file or export it:\n"
             "  export GROQ_API_KEY='your-key-here'"
         )
     if key in PLACEHOLDER_KEYS:

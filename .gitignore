@@ -11,3 +11,4 @@ optimized.md
 saved/
 *.log
 .DS_Store
+.coverage

@@ -38,7 +38,7 @@ Issues = "https://github.com/khadarbashajilan/prompt-optimizer-tool/issues"
 prompt-optimizer = "prompt_optimizer_tool.cli:cli"
 
 [dependency-groups]
-dev = ["pytest>=8.0.0"]
+dev = ["pytest>=8.0.0", "pytest-cov>=6.0.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

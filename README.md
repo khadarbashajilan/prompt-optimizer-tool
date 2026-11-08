@@ -1,6 +1,6 @@
 # Prompt Optimizer
 
-> **Stop guessing. Start engineering.** A CLI tool that scores your prompt against 10 principles and rewrites it into a production-ready, structured prompt — powered by **Groq** (free tier, no credit card required).
+> **Stop guessing. Start engineering.** A CLI tool that scores your prompt against 10 principles and rewrites it into a production-ready, structured prompt — powered by **Groq** (no credit card required).
 
 [![CI](https://github.com/khadarbashajilan/prompt-optimizer-tool/actions/workflows/test.yml/badge.svg)](https://github.com/khadarbashajilan/prompt-optimizer-tool/actions)
 [![PyPI version](https://img.shields.io/pypi/v/prompt-optimizer-tool.svg)](https://pypi.org/project/prompt-optimizer-tool/)
@@ -197,7 +197,7 @@ variable, so none of them require a code change:
 | `PROMPT_OPTIMIZER_MODEL` | `openai/gpt-oss-20b` | Which Groq model to use |
 | `PROMPT_OPTIMIZER_TEMPERATURE` | `0.6` | Higher means more varied wording |
 | `PROMPT_OPTIMIZER_MAX_TOKENS` | `8192` | Reply ceiling; lower values truncate long rewrites |
-| `PROMPT_OPTIMIZER_MAX_RETRIES` | `3` | Attempts per call, handles free-tier rate limits |
+| `PROMPT_OPTIMIZER_MAX_RETRIES` | `3` | Attempts per call, handles transient rate limits |
 | `PROMPT_OPTIMIZER_TIMEOUT` | `60` | Per-request seconds, so a stalled call cannot hang |
 | `PROMPT_OPTIMIZER_OUTPUT_DIR` | `saved` | Default folder for saved rewrites |
 
@@ -233,7 +233,7 @@ Planned next: logging, and an opt-in live-model integration test.
 - **Structured Outputs in strict mode** — using `with_structured_output(Model, method="json_schema", strict=True)`. Groq's strict mode uses constrained decoding, so the response is guaranteed to match the Pydantic schema. Tool calling would be the alternative, but Groq does not support tool use together with Structured Outputs, and strict mode is the stronger guarantee.
 - **Constrained decoding doubles as validation** — because the decoder can only emit declared values, `Literal` fields (`severity`, `principle`, `principles_applied`) cannot come back as typos or invented names. This is what guarantees the "Principles Applied" panel can always resolve a principle, instead of silently rendering nothing when the model returns a name rather than a key.
 - **Closed schemas only** — strict mode requires every field to be required and every object to set `additionalProperties: false`. A free-form `dict[str, str]` collapses to an always-empty object under those rules, so `sections` is a `list[PromptSection]` (explicit `name` + `content`) instead.
-- **Model choice: `openai/gpt-oss-20b`** — free tier, ~1000 tokens/sec, and one of only three models supporting strict-mode Structured Outputs. The old `llama-3.x` ids are Enterprise-only now, so they are not free.
+- **Model choice: `openai/gpt-oss-20b`** — ~1000 tokens/sec, and one of only three models supporting strict-mode Structured Outputs. The old `llama-3.x` ids are Enterprise-only now, so they are not free.
 - **`temperature=0.6`** — Groq recommends 0.5–0.7 for gpt-oss; the low values typical of deterministic chat models degrade into repetition and incoherent output on this model.
 - **`max_tokens=8192`** — Groq's default of 1024 completion tokens truncates long rewritten prompts, which breaks JSON parsing. The model's hidden reasoning also counts against this budget, and 4096 occasionally ran out before any JSON was written.
 - **One table, three consumers** — the 10 principles live in a single `PRINCIPLES` dict. The `list` command renders it, and both system prompts are generated from it. Previously the rules were hand-copied into both prompt strings, so editing a rule in one place silently left the other two stale.

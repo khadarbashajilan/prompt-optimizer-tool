@@ -8,9 +8,19 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "prompt-optimizer-tool"
 version = "0.1.0"
-description = "CLI tool to optimize prompts following best practices using Groq"
+description = "CLI tool that grades prompts 0-100 against 10 engineering principles and rewrites them, powered by Groq"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "khadar", email = "khadarbashajilan001@gmail.com" }]
 requires-python = ">=3.12"
+keywords = ["prompt", "prompt-engineering", "llm", "groq", "langchain", "cli"]
+classifiers = [
+    "Environment :: Console",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development",
+]
 dependencies = [
     "langchain-groq>=1.1.0",
     "langchain-core>=0.3.0",
@@ -19,6 +29,10 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "pydantic>=2.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/khadarbashajilan/prompt-optimizer-tool"
+Issues = "https://github.com/khadarbashajilan/prompt-optimizer-tool/issues"
 
 [project.scripts]
 prompt-optimizer = "prompt_optimizer_tool.cli:cli"

@@ -7,7 +7,7 @@ instead of approximately.
 from datetime import datetime
 from pathlib import Path
 
-from prompt_optimizer.storage import new_output_path, write_output
+from prompt_optimizer_tool.storage import new_output_path, write_output
 
 STAMP = datetime(2026, 9, 27, 14, 32, 5)
 

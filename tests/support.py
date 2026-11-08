@@ -17,7 +17,7 @@ from langchain_core.messages import BaseMessage
 from langchain_core.runnables import RunnableLambda
 from pydantic import BaseModel
 
-from prompt_optimizer.schemas import OptimizedPrompt, PromptAnalysis, PromptWeakness
+from prompt_optimizer_tool.schemas import OptimizedPrompt, PromptAnalysis, PromptWeakness
 
 
 def analysis(

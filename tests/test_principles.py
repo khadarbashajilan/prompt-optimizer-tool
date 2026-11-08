@@ -4,7 +4,7 @@ The dict keys, the PrincipleKey Literal, and both generated system prompts
 must never drift apart. These tests pin all three views to each other.
 """
 
-from prompt_optimizer.principles import (
+from prompt_optimizer_tool.principles import (
     ANALYSIS_SYSTEM_PROMPT,
     OPTIMIZER_SYSTEM_PROMPT,
     PRINCIPLES,

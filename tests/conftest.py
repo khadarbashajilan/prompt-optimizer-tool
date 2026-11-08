@@ -19,9 +19,9 @@ from dataclasses import dataclass, field
 import pytest
 from click.testing import CliRunner
 
-from prompt_optimizer import analyzer, cli, optimizer
-from prompt_optimizer.config import MissingAPIKeyError
-from prompt_optimizer.schemas import PromptAnalysis
+from prompt_optimizer_tool import analyzer, cli, optimizer
+from prompt_optimizer_tool.config import MissingAPIKeyError
+from prompt_optimizer_tool.schemas import PromptAnalysis
 
 from support import FakeProvider, analysis, optimized
 

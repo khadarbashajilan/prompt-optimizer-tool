@@ -33,7 +33,7 @@ elif command -v uv >/dev/null 2>&1; then
 elif [ -x .venv/bin/python ]; then
     # PYTHONPATH=src so this works even if the project was never installed
     # into that virtualenv.
-    cli() { PYTHONPATH=src .venv/bin/python -m prompt_optimizer.cli "$@"; }
+    cli() { PYTHONPATH=src .venv/bin/python -m prompt_optimizer_tool.cli "$@"; }
 else
     echo "No runner found."
     echo "Install uv: https://docs.astral.sh/uv/getting-started/installation/"

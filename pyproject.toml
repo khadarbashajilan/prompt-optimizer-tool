@@ -6,7 +6,7 @@ requires = ["setuptools>=75.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prompt-optimizer"
+name = "prompt-optimizer-tool"
 version = "0.1.0"
 description = "CLI tool to optimize prompts following best practices using Groq"
 readme = "README.md"
@@ -21,16 +21,10 @@ dependencies = [
 ]
 
 [project.scripts]
-prompt-optimizer = "prompt_optimizer.cli:cli"
+prompt-optimizer = "prompt_optimizer_tool.cli:cli"
 
 [dependency-groups]
 dev = ["pytest>=8.0.0"]
-
-[tool.setuptools]
-packages = ["prompt_optimizer"]
-
-[tool.setuptools.package-dir]
-prompt_optimizer = "src"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

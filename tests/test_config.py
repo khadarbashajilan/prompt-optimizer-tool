@@ -6,7 +6,7 @@ at import time and are therefore not re-loadable within a test process.
 
 import pytest
 
-from prompt_optimizer.config import MissingAPIKeyError, api_key
+from prompt_optimizer_tool.config import MissingAPIKeyError, api_key
 
 
 def test_returns_a_stripped_key(monkeypatch: pytest.MonkeyPatch) -> None:

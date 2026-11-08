@@ -6,8 +6,8 @@ that is not validated here is a constraint nothing enforces at runtime.
 
 import pytest
 
-from prompt_optimizer.principles import PRINCIPLES
-from prompt_optimizer.schemas import OptimizedPrompt, PromptWeakness
+from prompt_optimizer_tool.principles import PRINCIPLES
+from prompt_optimizer_tool.schemas import OptimizedPrompt, PromptWeakness
 
 from support import analysis, optimized
 

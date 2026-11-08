@@ -7,10 +7,10 @@ messages that would have reached Groq. Nothing here touches the network.
 
 import json
 
-from prompt_optimizer.analyzer import analyze_prompt
-from prompt_optimizer.optimizer import optimize_prompt
-from prompt_optimizer.principles import PRINCIPLES, PrincipleKey
-from prompt_optimizer.schemas import OptimizedPrompt, PromptAnalysis
+from prompt_optimizer_tool.analyzer import analyze_prompt
+from prompt_optimizer_tool.optimizer import optimize_prompt
+from prompt_optimizer_tool.principles import PRINCIPLES, PrincipleKey
+from prompt_optimizer_tool.schemas import OptimizedPrompt, PromptAnalysis
 
 from support import FakeProvider, analysis, optimized
 

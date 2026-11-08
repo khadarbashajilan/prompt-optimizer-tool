@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from prompt_optimizer import cli
-from prompt_optimizer.config import MissingAPIKeyError
+from prompt_optimizer_tool import cli
+from prompt_optimizer_tool.config import MissingAPIKeyError
 
 from support import optimized
 

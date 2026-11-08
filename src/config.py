@@ -16,7 +16,15 @@ dotenv.load_dotenv()
 
 
 class MissingAPIKeyError(RuntimeError):
-    """Raised when no Groq API key can be found."""
+    """Raised when no usable Groq API key can be found."""
+
+
+# Values that look like a key but are just the committed templates. They
+# pass any non-empty check and only fail at the provider, minutes later.
+PLACEHOLDER_KEYS = frozenset({
+    "your-groq-api-key-here",   # .env.example before this change
+    "gsk_your-key-here",        # from the message older versions printed
+})
 
 
 def _env_str(name: str, default: str) -> str:
@@ -60,12 +68,18 @@ def api_key() -> str:
         The value of GROQ_API_KEY.
 
     Raises:
-        MissingAPIKeyError: If the variable is unset or empty.
+        MissingAPIKeyError: If the variable is unset, empty, or one of the
+            known template placeholders.
     """
     key = os.getenv("GROQ_API_KEY", "").strip()
     if not key:
         raise MissingAPIKeyError(
             "GROQ_API_KEY not found. Set it in .env file or export it:\n"
             "  export GROQ_API_KEY='your-key-here'"
+        )
+    if key in PLACEHOLDER_KEYS:
+        raise MissingAPIKeyError(
+            "GROQ_API_KEY is still the placeholder from .env.example. "
+            "Replace it with a real key: https://console.groq.com/keys"
         )
     return key

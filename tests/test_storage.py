@@ -30,6 +30,16 @@ def test_same_second_runs_do_not_collide(tmp_path: Path) -> None:
 
 def test_write_output_creates_missing_folders(tmp_path: Path) -> None:
     path = tmp_path / "nested" / "deeper" / "optimized-20260927-143205.md"
+
     write_output("hello", path)
 
     assert path.read_text(encoding="utf-8") == "hello"
+
+
+def test_write_output_round_trips_exactly(tmp_path: Path) -> None:
+    path = new_output_path(tmp_path, now=STAMP)
+    prompt = "Role: engineer\n\nObjective: ...\n\n trailing newline\n"
+
+    write_output(prompt, path)
+
+    assert path.read_text(encoding="utf-8") == prompt

@@ -6,10 +6,20 @@ cd "$(dirname "$0")"
 trap 'echo; exit 130' INT
 
 # --- preflight: API key -------------------------------------------------
-if [ -z "${GROQ_API_KEY:-}" ] && ! grep -qE '^GROQ_API_KEY=.+$' .env 2>/dev/null; then
-    echo "GROQ_API_KEY is not set."
-    echo "Add it to .env (see .env.example) or export it:"
-    echo "  export GROQ_API_KEY='your-key-here'"
+# A placeholder copied straight from .env.example is not a key; fail before
+# spending time on `uv sync`.
+runtime_key="${GROQ_API_KEY:-}"
+if [ -z "$runtime_key" ]; then
+    env_key=$(grep -E '^GROQ_API_KEY=.+$' .env 2>/dev/null | head -1 | cut -d= -f2- || true)
+    case "$env_key" in
+        your-*|gsk_your-*) env_key="" ;;
+    esac
+    runtime_key="$env_key"
+fi
+if [ -z "$runtime_key" ]; then
+    echo "GROQ_API_KEY is not set (or is still the .env.example placeholder)."
+    echo "Add a real key to .env (see .env.example) or export it:"
+    echo "  export GROQ_API_KEY='your-key-here'   # from https://console.groq.com/keys"
     exit 1
 fi
 

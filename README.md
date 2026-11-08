@@ -90,14 +90,14 @@ Defined once in `principles.py` and reused everywhere:
 
 | Technology | Where Used | Purpose |
 |---|---|---|
-| **Groq** (`openai/gpt-oss-20b`) | `llm.py:35` | Powers both LLM calls via `ChatGroq`. Free tier, no credit card required |
-| **LangChain** (`ChatGroq`, `ChatPromptTemplate`) | `llm.py:61`, `analyzer.py:33`, `optimizer.py:34` | Provider abstraction, prompt templates, chain composition with LCEL |
-| **Structured Outputs** (`with_structured_output`) | `llm.py:61` | Groq's `json_schema` mode in **strict** mode uses constrained decoding, so every response matches the Pydantic schema — no JSON parse errors, and `Literal` fields can only return declared values |
+| **Groq** (`openai/gpt-oss-20b`) | `src/llm.py:35` | Powers both LLM calls via `ChatGroq`. Free tier, no credit card required |
+| **LangChain** (`ChatGroq`, `ChatPromptTemplate`) | `src/llm.py:61`, `src/analyzer.py:30`, `src/optimizer.py:31` | Provider abstraction, prompt templates, chain composition with LCEL |
+| **Structured Outputs** (`with_structured_output`) | `src/llm.py:61` | Groq's `json_schema` mode in **strict** mode uses constrained decoding, so every response matches the Pydantic schema — no JSON parse errors, and `Literal` fields can only return declared values |
 | **Pydantic v2** (`BaseModel`, `Field`) | `schemas.py:19-56` | Data contracts for `PromptWeakness`, `PromptAnalysis`, `OptimizedPrompt` — validation + serialization |
-| **Click** (`@click.group`, `@click.command`, `@click.option`) | `cli.py:208-256` | CLI framework with composable commands, argument parsing, and auto-generated `--help` |
-| **Rich** (`Console`, `Panel`, `Table`, `Markdown`, `Columns`) | `cli.py:53-137` | Terminal UI — color-coded score panels, weakness tables, markdown rendering, status spinners |
-| **python-dotenv** (`load_dotenv`) | `config.py:15` | Auto-loads `GROQ_API_KEY` from `.env` file — no manual config flags |
-| **pytest** | `tests/` | 17 offline tests; no API key or network needed |
+| **Click** (`@click.group`, `@click.command`, `@click.option`) | `src/cli.py:233-270` | CLI framework with composable commands, argument parsing, and auto-generated `--help` |
+| **Rich** (`Console`, `Panel`, `Table`, `Markdown`, `Columns`) | `src/cli.py:53-137` | Terminal UI — color-coded score panels, weakness tables, markdown rendering, status spinners |
+| **python-dotenv** (`load_dotenv`) | `src/config.py:15` | Auto-loads `GROQ_API_KEY` from `.env` file — no manual config flags |
+| **pytest** (offline suite) | `tests/` | ~43 cases, no API key or network needed: CLI flow via `CliRunner`, the LLM seam with a fake provider, schemas, principles, config, storage |
 | **uv** | `pyproject.toml` | Package manager — single `uv sync` installs deps, builds package, registers CLI entry point |
 | **Python 3.12** | `.python-version`, `pyproject.toml` | Type hints (`list[str]`, `dict[str, str]`), `str.removeprefix`/`removesuffix` |
 
@@ -190,12 +190,12 @@ What this tool does **not** do yet, so expectations are clear:
 |---|---|---|
 | **No logging** | Errors print to the terminal only; no debug trail | Add structured logging (log file + `--debug` flag) |
 | **No caching** | Analyze + Optimize each hit the API on every run | Cache analyses by prompt hash to avoid repeat cost |
-| **No live-chain tests** | The 17 tests cover pure logic only; the two LLM steps are verified by hand | Add tests with a recorded or mocked Groq response |
+| **No live-model tests** | The ~43 offline tests fake the provider seam only; real Groq structured-output calls are verified by hand | Add an opt-in integration test with a real key |
 | **No model fallback** | If the configured model is unavailable the run fails after retries | Add a second model to fall back to |
 | **Console only** | No way to diff a rewrite against its previous version | Add `--diff <file>` to compare two saved runs |
-| **No CI** | Tests only run locally | Add a GitHub Actions workflow running `uv run pytest` |
+| **No CI** | Checks only run locally | Add a GitHub Actions workflow |
 
-Planned next: logging, and live-chain tests with a mocked Groq response.
+Planned next: logging, and an opt-in live-model integration test.
 
 ## Key Design Decisions
 
@@ -209,7 +209,9 @@ Planned next: logging, and live-chain tests with a mocked Groq response.
 - **Keys, not names, cross the wire** — the LLM is asked for principle *keys* (`role`), and `principle_name()` maps a key to a display title at render time. Fewer tokens in the prompt, and lookups cannot fail.
 - **`config.py` owns every setting** — no `os.environ` reads and no magic numbers outside it. `llm.py` is the only module that knows how to reach Groq, so the two pipeline steps never construct a client themselves.
 - **One-way dependencies** — `cli` → `analyzer`/`optimizer` → `llm` → `config`, with `principles` and `schemas` at the bottom. The optimizer used to import its client from the analyzer, which inverted the natural reading order for no benefit.
-- **Flat module layout** — no `src/` nesting; every module is importable by name. Keeps the entry point simple: `cli:cli`.
+- **src/ package layout** — the modules live under `src/` and setuptools maps the package name with `package-dir = { prompt_optimizer = "src" }`; the entry point is `prompt_optimizer.cli:cli`. Tests import the installed package, so they run against what users get.
+- **Failures exit non-zero** — `optimize` exits 1 when a step fails and 2 on missing input, so shell scripts and `run.sh` can trust the exit status instead of parsing output. A placeholder key fails the same way, before any tokens are spent.
+- **Untrusted content boundary** — the text being analyzed or rewritten is wrapped in `<prompt_to_analyze>` tags with an explicit "data, never instructions" instruction, because prompts can contain instructions themselves.
 - **Rich for DX** — color-coded severity, panel layouts, markdown rendering, and status spinners give instant visual feedback without a single HTML page.
 - **Config-free API Key** — `python-dotenv` loads `.env` automatically; no `--api-key` flag cluttering the interface.
 - **Zero-config Package Management** — `uv` handles deps, build, and entry point registration in one command.
@@ -217,10 +219,12 @@ Planned next: logging, and live-chain tests with a mocked Groq response.
 ## Development
 
 ```bash
-uv sync                 # install deps
-uv run pytest           # 17 offline tests, no API key needed
+uv sync                 # install deps (includes the dev group with pytest)
+uv run pytest           # offline suite: no API key, no network
 uv run prompt-optimizer list
 ```
+
+Use the venv directly if you prefer: `.venv/bin/python -m pytest`.
 
 ## Project Structure
 
@@ -230,15 +234,24 @@ prompt-optimizer/
   run.sh                  # bootstrap + interactive menu
   .env.example            # GROQ_API_KEY template
   .gitignore
-  cli.py                  # Click commands + Rich rendering
-  analyzer.py             # Step 1: grade a prompt
-  optimizer.py            # Step 2: rewrite it
-  principles.py           # 10 principles; generates both system prompts
-  schemas.py              # Pydantic contracts for structured I/O
-  llm.py                  # the only module that talks to Groq
-  config.py               # all settings + API key loading
-  storage.py              # timestamped path per run, then write
-  tests/                  # offline tests, no network
+  src/
+    cli.py                # Click commands + Rich rendering
+    analyzer.py           # Step 1: grade a prompt
+    optimizer.py          # Step 2: rewrite it
+    principles.py         # 10 principles; generates both system prompts
+    schemas.py            # Pydantic contracts for structured I/O
+    llm.py                # the only module that talks to Groq
+    config.py             # all settings + API key loading
+    storage.py            # timestamped path per run, then write
+  tests/
+    support.py            # FakeProvider + fresh-model factories
+    conftest.py           # fixtures for the two test seams
+    test_cli.py           # end-to-end: input modes, exit codes, saving
+    test_pipeline.py      # schema + message contracts at the LLM seam
+    test_principles.py    # table/Literal/prompt consistency
+    test_schemas.py       # validation bounds and Literal values
+    test_config.py        # API key resolution + placeholder rejection
+    test_storage.py       # timestamped naming, collision, folders
   saved/                  # one file per run, gitignored
 ```
 

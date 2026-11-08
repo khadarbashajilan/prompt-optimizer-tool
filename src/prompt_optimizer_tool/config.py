@@ -47,8 +47,10 @@ MODEL = _env_str("PROMPT_OPTIMIZER_MODEL", "openai/gpt-oss-20b")
 TEMPERATURE = _env_float("PROMPT_OPTIMIZER_TEMPERATURE", 0.6)
 
 # Groq's own default of 1024 tokens truncates long rewrites mid-sentence,
-# which breaks the strict-schema decode. 4096 leaves room for a full prompt.
-MAX_TOKENS = _env_int("PROMPT_OPTIMIZER_MAX_TOKENS", 4096)
+# which breaks the strict-schema decode. gpt-oss is a reasoning model whose
+# hidden reasoning tokens count against this budget; at 4096 a long prompt
+# occasionally used it all and returned an empty reply, so 8192 gives headroom.
+MAX_TOKENS = _env_int("PROMPT_OPTIMIZER_MAX_TOKENS", 8192)
 
 # 3 attempts total. Handles the free tier's rate limiting (HTTP 429) and
 # transient network errors.

@@ -181,7 +181,7 @@ variable, so none of them require a code change:
 | `GROQ_API_KEY` | *(required)* | Authorises the calls. Read from `.env` |
 | `PROMPT_OPTIMIZER_MODEL` | `openai/gpt-oss-20b` | Which Groq model to use |
 | `PROMPT_OPTIMIZER_TEMPERATURE` | `0.6` | Higher means more varied wording |
-| `PROMPT_OPTIMIZER_MAX_TOKENS` | `4096` | Reply ceiling; lower values truncate long rewrites |
+| `PROMPT_OPTIMIZER_MAX_TOKENS` | `8192` | Reply ceiling; lower values truncate long rewrites |
 | `PROMPT_OPTIMIZER_MAX_RETRIES` | `3` | Attempts per call, handles free-tier rate limits |
 | `PROMPT_OPTIMIZER_TIMEOUT` | `60` | Per-request seconds, so a stalled call cannot hang |
 | `PROMPT_OPTIMIZER_OUTPUT_DIR` | `saved` | Default folder for saved rewrites |
@@ -220,7 +220,7 @@ Planned next: logging, and an opt-in live-model integration test.
 - **Closed schemas only** — strict mode requires every field to be required and every object to set `additionalProperties: false`. A free-form `dict[str, str]` collapses to an always-empty object under those rules, so `sections` is a `list[PromptSection]` (explicit `name` + `content`) instead.
 - **Model choice: `openai/gpt-oss-20b`** — free tier, ~1000 tokens/sec, and one of only three models supporting strict-mode Structured Outputs. The old `llama-3.x` ids are Enterprise-only now, so they are not free.
 - **`temperature=0.6`** — Groq recommends 0.5–0.7 for gpt-oss; the low values typical of deterministic chat models degrade into repetition and incoherent output on this model.
-- **`max_tokens=4096`** — Groq's default of 1024 completion tokens truncates long rewritten prompts, which breaks JSON parsing.
+- **`max_tokens=8192`** — Groq's default of 1024 completion tokens truncates long rewritten prompts, which breaks JSON parsing. The model's hidden reasoning also counts against this budget, and 4096 occasionally ran out before any JSON was written.
 - **One table, three consumers** — the 10 principles live in a single `PRINCIPLES` dict. The `list` command renders it, and both system prompts are generated from it. Previously the rules were hand-copied into both prompt strings, so editing a rule in one place silently left the other two stale.
 - **Keys, not names, cross the wire** — the LLM is asked for principle *keys* (`role`), and `principle_name()` maps a key to a display title at render time. Fewer tokens in the prompt, and lookups cannot fail.
 - **`config.py` owns every setting** — no `os.environ` reads and no magic numbers outside it. `llm.py` is the only module that knows how to reach Groq, so the two pipeline steps never construct a client themselves.

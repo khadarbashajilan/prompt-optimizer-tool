@@ -1,0 +1,442 @@
+{
+  "model": "openai/gpt-oss-20b",
+  "summary": {
+    "n_total": 24,
+    "n_ok": 20,
+    "n_failed": 4,
+    "mean_before": 30.4,
+    "mean_after": 90.2,
+    "mean_lift": 59.8,
+    "median_lift": 60.0,
+    "pct_improved": 95.0,
+    "pct_unchanged": 0.0,
+    "pct_regressed": 5.0,
+    "mean_section_coverage_pct": 95.0,
+    "by_category": {
+      "coding": {
+        "n": 4,
+        "mean_before": 21.2,
+        "mean_after": 88.8,
+        "mean_lift": 67.5,
+        "pct_improved": 100.0,
+        "pct_regressed": 0.0
+      },
+      "writing": {
+        "n": 4,
+        "mean_before": 23.8,
+        "mean_after": 91.0,
+        "mean_lift": 67.2,
+        "pct_improved": 100.0,
+        "pct_regressed": 0.0
+      },
+      "extraction": {
+        "n": 3,
+        "mean_before": 18.3,
+        "mean_after": 89.0,
+        "mean_lift": 70.7,
+        "pct_improved": 100.0,
+        "pct_regressed": 0.0
+      },
+      "analysis": {
+        "n": 4,
+        "mean_before": 28.8,
+        "mean_after": 90.0,
+        "mean_lift": 61.2,
+        "pct_improved": 100.0,
+        "pct_regressed": 0.0
+      },
+      "agent_system": {
+        "n": 4,
+        "mean_before": 41.2,
+        "mean_after": 91.8,
+        "mean_lift": 50.5,
+        "pct_improved": 100.0,
+        "pct_regressed": 0.0
+      },
+      "already_good": {
+        "n": 1,
+        "mean_before": 92.0,
+        "mean_after": 90.0,
+        "mean_lift": -2.0,
+        "pct_improved": 0.0,
+        "pct_regressed": 100.0
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "coding-01",
+      "category": "coding",
+      "before": 25,
+      "after": 85,
+      "lift": 60,
+      "coverage": 0.8333333333333334,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "coding-02",
+      "category": "coding",
+      "before": 10,
+      "after": 90,
+      "lift": 80,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "coding-03",
+      "category": "coding",
+      "before": 30,
+      "after": 90,
+      "lift": 60,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "coding-04",
+      "category": "coding",
+      "before": 20,
+      "after": 90,
+      "lift": 70,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "writing-01",
+      "category": "writing",
+      "before": 15,
+      "after": 92,
+      "lift": 77,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "writing-02",
+      "category": "writing",
+      "before": 40,
+      "after": 92,
+      "lift": 52,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "writing-03",
+      "category": "writing",
+      "before": 30,
+      "after": 90,
+      "lift": 60,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "writing-04",
+      "category": "writing",
+      "before": 10,
+      "after": 90,
+      "lift": 80,
+      "coverage": 0.5,
+      "sections_found": [
+        "role",
+        "objective",
+        "context"
+      ],
+      "error": null
+    },
+    {
+      "id": "extraction-01",
+      "category": "extraction",
+      "before": 10,
+      "after": 90,
+      "lift": 80,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "extraction-02",
+      "category": "extraction",
+      "before": null,
+      "after": null,
+      "lift": null,
+      "coverage": null,
+      "sections_found": null,
+      "error": "BadRequestError: Error code: 400 - {'error': {'message': \"Generated JSON does not match the expected schema. Please adjust your prompt. See 'failed_generation' for more details. Error: jsonschema: '' does not validate with /required: missing properties: 'weaknesses'\", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': '{\"score\":60,\"strengths\":[\"The objective is clear and specific.\"]}'}}"
+    },
+    {
+      "id": "extraction-03",
+      "category": "extraction",
+      "before": 20,
+      "after": 92,
+      "lift": 72,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "extraction-04",
+      "category": "extraction",
+      "before": 25,
+      "after": 85,
+      "lift": 60,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "analysis-01",
+      "category": "analysis",
+      "before": 10,
+      "after": 85,
+      "lift": 75,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "analysis-02",
+      "category": "analysis",
+      "before": 35,
+      "after": 93,
+      "lift": 58,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "analysis-03",
+      "category": "analysis",
+      "before": 50,
+      "after": 90,
+      "lift": 40,
+      "coverage": 0.8333333333333334,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "analysis-04",
+      "category": "analysis",
+      "before": 20,
+      "after": 92,
+      "lift": 72,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "agent-01",
+      "category": "agent_system",
+      "before": 70,
+      "after": 90,
+      "lift": 20,
+      "coverage": 0.8333333333333334,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "agent-02",
+      "category": "agent_system",
+      "before": 35,
+      "after": 90,
+      "lift": 55,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "agent-03",
+      "category": "agent_system",
+      "before": 50,
+      "after": 95,
+      "lift": 45,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "agent-04",
+      "category": "agent_system",
+      "before": 10,
+      "after": 92,
+      "lift": 82,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "good-01",
+      "category": "already_good",
+      "before": 92,
+      "after": 90,
+      "lift": -2,
+      "coverage": 1.0,
+      "sections_found": [
+        "role",
+        "objective",
+        "context",
+        "instructions",
+        "constraints",
+        "output_format"
+      ],
+      "error": null
+    },
+    {
+      "id": "good-02",
+      "category": "already_good",
+      "before": null,
+      "after": null,
+      "lift": null,
+      "coverage": null,
+      "sections_found": null,
+      "error": "BadRequestError: Error code: 400 - {'error': {'message': \"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': ''}}"
+    },
+    {
+      "id": "good-03",
+      "category": "already_good",
+      "before": null,
+      "after": null,
+      "lift": null,
+      "coverage": null,
+      "sections_found": null,
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kpx0hr5be4hssw2808z853p7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196312, Requested 4697. Please try again in 7m15.888s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+    },
+    {
+      "id": "good-04",
+      "category": "already_good",
+      "before": null,
+      "after": null,
+      "lift": null,
+      "coverage": null,
+      "sections_found": null,
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kpx0hr5be4hssw2808z853p7` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196306, Requested 4672. Please try again in 7m2.496s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+    }
+  ]
+}

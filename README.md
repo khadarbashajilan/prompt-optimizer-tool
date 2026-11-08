@@ -1,6 +1,15 @@
 # Prompt Optimizer
 
-A CLI tool that **analyzes and rewrites prompts** following established prompt engineering best practices. Powered by **LangChain** + **Groq** (free tier, no credit card).
+> **Stop guessing. Start engineering.** A CLI tool that scores your prompt against 10 principles and rewrites it into a production-ready, structured prompt — powered by **Groq** (free tier, no credit card required).
+
+[![CI](https://github.com/khadarbashajilan/prompt-optimizer-tool/actions/workflows/test.yml/badge.svg)](https://github.com/khadarbashajilan/prompt-optimizer-tool/actions)
+[![PyPI version](https://img.shields.io/pypi/v/prompt-optimizer-tool.svg)](https://pypi.org/project/prompt-optimizer-tool/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+![Demo](media/demo.gif)
+
+---
 
 ## Why I Built This
 
@@ -119,8 +128,11 @@ pipx install prompt-optimizer-tool
 ### Set your Groq API key (free, no credit card: https://console.groq.com/keys)
 
 ```bash
+# Interactive setup — saves key permanently to ~/.prompt-optimizer/config.env
+prompt-optimizer setup
+
+# Or export it manually for the current session
 export GROQ_API_KEY=gsk_your-key-here
-prompt-optimizer optimize "write code in python to fetch api data"
 ```
 
 ### Install from source (alternative)
@@ -151,24 +163,27 @@ a file, list the 10 principles, show help, or quit. It verifies
 ## Usage
 
 ```bash
-# Basic — analyze + optimize a prompt
-uv run prompt-optimizer optimize "write code in python to fetch api data"
+# 1. First-time setup — save your Groq API key permanently
+prompt-optimizer setup
+
+# 2. Analyze + optimize a prompt
+prompt-optimizer optimize "write code in python to fetch api data"
 
 # Read from file
-uv run prompt-optimizer optimize --file prompt.txt
+prompt-optimizer optimize --file prompt.txt
 
 # Pipe from stdin
-echo "explain quantum computing to a 5 year old" | uv run prompt-optimizer optimize
+echo "explain quantum computing to a 5 year old" | prompt-optimizer optimize
 
 # Each run is auto-saved to its own timestamped file in saved/
-uv run prompt-optimizer optimize "write a blog post"
+prompt-optimizer optimize "write a blog post"
 #   → saved/optimized-20260927-143205.md
 
 # Choose a different output folder
-uv run prompt-optimizer optimize "write a blog post" --out ~/prompts
+prompt-optimizer optimize "write a blog post" --out ~/prompts
 
 # List all 10 prompting principles
-uv run prompt-optimizer list
+prompt-optimizer list
 ```
 
 ### Configuration
@@ -269,6 +284,30 @@ prompt-optimizer/
     test_config.py        # API key resolution + placeholder rejection
     test_storage.py       # timestamped naming, collision, folders
   saved/                  # one file per run, gitignored
+  media/
+    demo.gif              # animated demo (auto-generated)
 ```
 
+---
+
+## Evaluation Results
+
+Benchmark run across 10 real-world prompts on 2026-11-08 — full metrics, scores, and principle coverage:
+
+📄 **[eval/results/20261108-220810.md](eval/results/20261108-220810.md)**
+
+---
+
+## Contributing
+
+1. Fork → branch → PR against `main`
+2. Run the offline test suite: `uv run pytest` — CI enforces **≥90% coverage**
+3. No API key needed for tests; the LLM seam is faked via `FakeProvider` in `tests/support.py`
+4. Run `prompt-optimizer setup` to configure your Groq key for manual testing
+
+---
+
+## License
+
+[MIT](LICENSE)
 

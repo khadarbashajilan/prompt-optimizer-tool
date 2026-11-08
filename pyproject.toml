@@ -23,14 +23,17 @@ dependencies = [
 [project.scripts]
 prompt-optimizer = "prompt_optimizer.cli:cli"
 
+[dependency-groups]
+dev = ["pytest>=8.0.0"]
+
 [tool.setuptools]
 packages = ["prompt_optimizer"]
 
 [tool.setuptools.package-dir]
 prompt_optimizer = "src"
 
-[dependency-groups]
-dev = ["pytest>=8.0.0"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+

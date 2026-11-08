@@ -1,95 +1,93 @@
-"""Shared fixtures for the offline test suite.
+"""Fixtures for the offline test suite.
 
-No test in this suite touches the network or needs an API key. The only
-place that knows how to reach Groq is `structured_llm`, which analyzer.py
-and optimizer.py import into their own namespace, so patching that name on
-each module intercepts the provider without touching production code.
+Fixtures only — every reusable double or factory lives in support.py.
 
-The stub still builds a real LangChain runnable, so the chain under test is
-the same `ChatPromptTemplate | provider` composition the tool uses. That
-means tests assert on the messages that *would* have been sent.
+Two seams are patched, at the two boundaries the tests exercise:
+
+- ``provider`` replaces ``structured_llm`` inside analyzer and optimizer,
+  so pipeline tests run the real chain composition without a network.
+- ``pipeline`` replaces ``analyze_prompt``/``optimize_prompt`` inside the
+  cli module, so CLI tests cover argument parsing through file writing
+  with the two LLM steps stubbed out.
+
+Production code is never modified by the tests themselves; patches are
+undone by monkeypatch.
 """
 
 from dataclasses import dataclass, field
-from typing import Any
 
 import pytest
-from langchain_core.messages import BaseMessage
-from langchain_core.runnables import RunnableLambda
-from pydantic import BaseModel
+from click.testing import CliRunner
 
-from prompt_optimizer import analyzer, optimizer
-from prompt_optimizer.schemas import (
-    OptimizedPrompt,
-    PromptAnalysis,
-    PromptWeakness,
-)
+from prompt_optimizer import analyzer, cli, optimizer
+from prompt_optimizer.config import MissingAPIKeyError
+from prompt_optimizer.schemas import PromptAnalysis
 
-SAMPLE_ANALYSIS = PromptAnalysis(
-    score=55,
-    strengths=["the intent is legible"],
-    weaknesses=[
-        PromptWeakness(
-            issue="no role is assigned",
-            severity="critical",
-            principle="role",
-            suggestion="name a persona with a relevant expertise level",
-        )
-    ],
-)
-
-SAMPLE_OPTIMIZED = OptimizedPrompt(
-    sections=[],
-    full_prompt="You are a senior engineer. Write a haiku about rain.",
-    changes_made=["assigned a role", "added an output format"],
-    principles_applied=["role", "output_format"],
-)
-
-RESPONSES: dict[type[BaseModel], BaseModel] = {
-    PromptAnalysis: SAMPLE_ANALYSIS,
-    OptimizedPrompt: SAMPLE_OPTIMIZED,
-}
-
-
-@dataclass
-class ProviderCall:
-    """One intercepted request to the provider seam."""
-
-    schema: type[BaseModel]
-    messages: list[BaseMessage]
-
-    @property
-    def system(self) -> str:
-        return str(self.messages[0].content)
-
-    @property
-    def human(self) -> str:
-        return str(self.messages[1].content)
-
-
-@dataclass
-class ProviderSpy:
-    """Stands in for `structured_llm`, recording every call it receives."""
-
-    calls: list[ProviderCall] = field(default_factory=list)
-
-    def __call__(self, schema: type[BaseModel]) -> RunnableLambda:
-        def respond(rendered: Any) -> BaseModel:
-            self.calls.append(ProviderCall(schema, rendered.to_messages()))
-            return RESPONSES[schema]
-
-        return RunnableLambda(respond)
-
-    @property
-    def only(self) -> ProviderCall:
-        assert len(self.calls) == 1, f"expected 1 provider call, got {len(self.calls)}"
-        return self.calls[0]
+from support import FakeProvider, analysis, optimized
 
 
 @pytest.fixture
-def provider(monkeypatch: pytest.MonkeyPatch) -> ProviderSpy:
-    """Intercept the provider seam for both pipeline steps."""
-    spy = ProviderSpy()
-    monkeypatch.setattr(analyzer, "structured_llm", spy)
-    monkeypatch.setattr(optimizer, "structured_llm", spy)
-    return spy
+def provider(monkeypatch: pytest.MonkeyPatch) -> FakeProvider:
+    """Intercept the provider seam used by both pipeline steps."""
+    fake = FakeProvider()
+    monkeypatch.setattr(analyzer, "structured_llm", fake)
+    monkeypatch.setattr(optimizer, "structured_llm", fake)
+    return fake
+
+
+@dataclass
+class FakePipeline:
+    """Stands in for the two LLM steps the CLI drives.
+
+    Records every prompt and analysis it receives. Set ``analysis_error``
+    or ``optimize_error`` to simulate a provider failure at either step.
+    """
+
+    analysis_error: Exception | None = None
+    optimize_error: Exception | None = None
+    prompts: list[str] = field(default_factory=list)
+    analyses: list[PromptAnalysis] = field(default_factory=list)
+
+    def analyze_prompt(self, prompt_text: str) -> PromptAnalysis:
+        """Record the prompt and return a canned analysis (or raise)."""
+        self.prompts.append(prompt_text)
+        if self.analysis_error:
+            raise self.analysis_error
+        return analysis()
+
+    def optimize_prompt(self, prompt_text: str, received: PromptAnalysis) -> PromptAnalysis:
+        """Record the forwarded analysis and return a canned rewrite (or raise)."""
+        self.analyses.append(received)
+        if self.optimize_error:
+            raise self.optimize_error
+        return optimized()
+
+    @property
+    def prompt(self) -> str:
+        """The single prompt the pipeline received."""
+        assert len(self.prompts) == 1, f"expected 1 prompt, got {len(self.prompts)}"
+        return self.prompts[0]
+
+
+@pytest.fixture
+def runner() -> CliRunner:
+    """Click's test runner; output is captured plain (Rich renders no ANSI)."""
+    return CliRunner()
+
+
+@pytest.fixture
+def pipeline(monkeypatch: pytest.MonkeyPatch) -> FakePipeline:
+    """Intercept the LLM steps at the CLI boundary."""
+    fake = FakePipeline()
+    monkeypatch.setattr(cli, "analyze_prompt", fake.analyze_prompt)
+    monkeypatch.setattr(cli, "optimize_prompt", fake.optimize_prompt)
+    return fake
+
+
+@pytest.fixture
+def placeholder_error() -> MissingAPIKeyError:
+    """The actionable error a placeholder key must produce."""
+    return MissingAPIKeyError(
+        "GROQ_API_KEY is still the placeholder from .env.example. "
+        "Replace it with a real key: https://console.groq.com/keys"
+    )

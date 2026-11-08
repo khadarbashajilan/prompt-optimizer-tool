@@ -149,7 +149,7 @@ def render_principles() -> None:
     console.print(table)
 
 
-def read_prompt(prompt: str | None, filepath: str | None) -> str | None:
+def read_prompt(prompt: str | None, filepath: str | None) -> str:
     """Resolve the prompt from a file, an argument, or stdin.
 
     Args:
@@ -157,8 +157,10 @@ def read_prompt(prompt: str | None, filepath: str | None) -> str | None:
         filepath: Path given via --file, if any.
 
     Returns:
-        The prompt text, or None if nothing was supplied. In that case the
-        usage hint has already been printed.
+        The prompt text, preserved exactly as given, whatever the source.
+
+    Raises:
+        click.UsageError: If no source produced any non-empty text.
     """
     if filepath:
         return Path(filepath).read_text(encoding="utf-8")
@@ -167,14 +169,14 @@ def read_prompt(prompt: str | None, filepath: str | None) -> str | None:
         return prompt
 
     # Only treat stdin as a source when it is a pipe, otherwise an
-    # interactive terminal would block waiting for input.
+    # interactive terminal would block waiting for input. Whitespace is
+    # preserved: leading or trailing newlines can be meaningful in prompts.
     if not sys.stdin.isatty():
-        piped = sys.stdin.read().strip()
-        if piped:
+        piped = sys.stdin.read()
+        if piped.strip():
             return piped
 
-    click.echo(USAGE_HINT)
-    return None
+    raise click.UsageError(f"No prompt text was given.\n{USAGE_HINT}")
 
 
 def _run_step(description: str, step: Callable[[], Any]) -> Any:
@@ -264,10 +266,15 @@ def optimize(prompt: str | None, filepath: str | None, output_dir: str) -> None:
 
     Accepts input as an argument, from a file, or via stdin pipe. Every run
     is saved to its own timestamped file in the output folder.
+
+    Raises:
+        SystemExit: Status 1 if a pipeline step failed, so callers and
+            scripts can rely on the exit status. Missing input raises
+            click.UsageError (status 2) instead.
     """
-    if not (text := read_prompt(prompt, filepath)):
-        return
-    run(text, output_dir)
+    text = read_prompt(prompt, filepath)
+    if run(text, output_dir) is None:
+        sys.exit(1)
 
 
 @cli.command(name="list")

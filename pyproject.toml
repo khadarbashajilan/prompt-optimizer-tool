@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prompt-optimizer-tool"
-version = "0.1.1"
+version = "0.1.2"
 description = "CLI tool that grades prompts 0-100 against 10 engineering principles and rewrites them, powered by Groq"
 readme = "README.md"
 license = "MIT"

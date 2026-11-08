@@ -103,16 +103,32 @@ Defined once in `principles.py` and reused everywhere:
 
 ## Installation
 
+Published on PyPI as [`prompt-optimizer-tool`](https://pypi.org/project/prompt-optimizer-tool/).
+
 ```bash
-# 1. Clone the repository
+# Try it instantly, nothing is installed
+uvx prompt-optimizer list
+
+# Install as an isolated tool (recommended)
+uv tool install prompt-optimizer-tool
+
+# or with pipx
+pipx install prompt-optimizer-tool
+```
+
+### Set your Groq API key (free, no credit card: https://console.groq.com/keys)
+
+```bash
+export GROQ_API_KEY=gsk_your-key-here
+prompt-optimizer optimize "write code in python to fetch api data"
+```
+
+### Install from source (alternative)
+
+```bash
 git clone https://github.com/khadarbashajilan/prompt-optimizer-tool.git
 cd prompt-optimizer-tool
-
-# 2. Set your Groq API key (free, no credit card: https://console.groq.com/keys)
-cp .env.example .env
-# Then edit .env and add your key: GROQ_API_KEY=gsk_your-key-here
-
-# 3. Run it
+cp .env.example .env   # then edit .env: GROQ_API_KEY=gsk_your-key-here
 ./run.sh
 ```
 

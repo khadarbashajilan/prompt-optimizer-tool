@@ -5,41 +5,55 @@ set -euo pipefail
 cd "$(dirname "$0")"
 trap 'echo; exit 130' INT
 
+PROMPT_TEXT=""
+
 # --- preflight: API key -------------------------------------------------
 # A placeholder copied straight from .env.example is not a key; fail before
 # spending time on `uv sync`.
-runtime_key="${GROQ_API_KEY:-}"
-if [ -z "$runtime_key" ]; then
-    env_key=$(grep -E '^GROQ_API_KEY=.+$' .env 2>/dev/null | head -1 | cut -d= -f2- || true)
-    case "$env_key" in
-        your-*|gsk_your-*) env_key="" ;;
-    esac
-    runtime_key="$env_key"
-fi
-if [ -z "$runtime_key" ]; then
-    echo "GROQ_API_KEY is not set (or is still the .env.example placeholder)."
-    echo "Add a real key to .env (see .env.example) or export it:"
-    echo "  export GROQ_API_KEY='your-key-here'   # from https://console.groq.com/keys"
-    exit 1
-fi
+read_env_key() {
+    grep -E '^GROQ_API_KEY=.+$' .env 2>/dev/null | head -1 | cut -d= -f2- || true
+}
+
+resolve_api_key() {
+    local key="${GROQ_API_KEY:-}"
+
+    if [ -z "$key" ]; then
+        key=$(read_env_key)
+        case "$key" in
+            your-*|gsk_your-*) key="" ;;
+        esac
+    fi
+
+    if [ -z "$key" ]; then
+        echo "GROQ_API_KEY is not set (or is still the .env.example placeholder)."
+        echo "Add a real key to .env (see .env.example) or export it:"
+        echo "  export GROQ_API_KEY='your-key-here'   # from https://console.groq.com/keys"
+        exit 1
+    fi
+}
 
 # --- preflight: runner ---------------------------------------------------
-if [ -x .venv/bin/prompt-optimizer ]; then
-    cli() { .venv/bin/prompt-optimizer "$@"; }
-elif command -v uv >/dev/null 2>&1; then
-    echo "Creating virtualenv (uv sync)..."
-    uv sync
-    cli() { uv run prompt-optimizer "$@"; }
-elif [ -x .venv/bin/python ]; then
-    # PYTHONPATH=src so this works even if the project was never installed
-    # into that virtualenv.
-    cli() { PYTHONPATH=src .venv/bin/python -m prompt_optimizer_tool.cli "$@"; }
-else
-    echo "No runner found."
-    echo "Install uv: https://docs.astral.sh/uv/getting-started/installation/"
-    echo "or create a virtualenv with: python3 -m venv .venv"
-    exit 1
-fi
+resolve_runner() {
+    if [ -x .venv/bin/prompt-optimizer ]; then
+        cli() { .venv/bin/prompt-optimizer "$@"; }
+    elif command -v uv >/dev/null 2>&1; then
+        echo "Creating virtualenv (uv sync)..."
+        uv sync
+        cli() { uv run prompt-optimizer "$@"; }
+    elif [ -x .venv/bin/python ]; then
+        # PYTHONPATH=src so this works even if the project was never installed
+        # into that virtualenv.
+        cli() { PYTHONPATH=src .venv/bin/python -m prompt_optimizer_tool.cli "$@"; }
+    else
+        echo "No runner found."
+        echo "Install uv: https://docs.astral.sh/uv/getting-started/installation/"
+        echo "or create a virtualenv with: python3 -m venv .venv"
+        exit 1
+    fi
+}
+
+resolve_api_key
+resolve_runner
 
 # pass-through: ./run.sh optimize "your prompt"
 if [ "$#" -gt 0 ]; then
@@ -48,8 +62,6 @@ if [ "$#" -gt 0 ]; then
 fi
 
 # --- helpers -------------------------------------------------------------
-PROMPT_TEXT=""
-
 # Fills PROMPT_TEXT. No command substitution: that would run this in a
 # subshell and swallow the prompt into the captured value.
 read_prompt() {
@@ -60,6 +72,10 @@ read_prompt() {
         [ -z "$line" ] && break
         PROMPT_TEXT+="$line"$'\n'
     done
+}
+
+prompt_is_empty() {
+    [ -z "${PROMPT_TEXT//[[:space:]]/}" ]
 }
 
 menu() {
@@ -84,7 +100,7 @@ while true; do
         1)
             echo
             read_prompt
-            if [ -z "${PROMPT_TEXT//[[:space:]]/}" ]; then
+            if prompt_is_empty; then
                 echo "Empty prompt, skipped."
                 continue
             fi

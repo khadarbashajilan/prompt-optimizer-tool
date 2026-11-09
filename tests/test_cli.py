@@ -15,6 +15,7 @@ from click.testing import CliRunner
 
 from prompt_optimizer_tool import cli
 from prompt_optimizer_tool.config import MissingAPIKeyError
+from prompt_optimizer_tool.principles import PRINCIPLES
 
 from support import optimized
 
@@ -130,6 +131,16 @@ def test_out_folder_is_honoured(runner: CliRunner, pipeline, tmp_path: Path) -> 
     files = list(out.glob("*.md"))
     assert len(files) == 1
     assert written(tmp_path) == []
+
+
+def test_list_renders_every_principle(runner: CliRunner) -> None:
+    result = runner.invoke(cli.cli, ["list"])
+
+    assert result.exit_code == 0, result.output
+    flat_output = " ".join(result.output.split())
+    assert "Prompt Engineering Principles" in flat_output
+    for key in PRINCIPLES:
+        assert key in flat_output
 
 
 def test_score_colour_thresholds() -> None:

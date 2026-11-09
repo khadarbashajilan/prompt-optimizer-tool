@@ -11,13 +11,9 @@ from pathlib import Path
 
 import dotenv
 
+ENV_PREFIX = "PROMPT_OPTIMIZER_"
 USER_CONFIG_DIR = Path.home() / ".prompt-optimizer"
 USER_CONFIG_FILE = USER_CONFIG_DIR / "config.env"
-
-# Reads .env from the working directory first, then user config if present.
-dotenv.load_dotenv()
-if USER_CONFIG_FILE.exists():
-    dotenv.load_dotenv(USER_CONFIG_FILE)
 
 
 class MissingAPIKeyError(RuntimeError):
@@ -32,40 +28,54 @@ PLACEHOLDER_KEYS = frozenset({
 })
 
 
+def _load_environment() -> None:
+    """Load `.env` files once, before any setting is read.
+
+    The working-directory `.env` is loaded first, then the user config if
+    it exists. Values already present in the environment win, which is
+    python-dotenv's default and keeps shell exports authoritative.
+    """
+    dotenv.load_dotenv()
+    if USER_CONFIG_FILE.exists():
+        dotenv.load_dotenv(USER_CONFIG_FILE)
+
+
 def _env_str(name: str, default: str) -> str:
-    return os.getenv(name, default)
+    return os.getenv(f"{ENV_PREFIX}{name}", default)
 
 
 def _env_float(name: str, default: float) -> float:
-    return float(os.getenv(name, default))
+    return float(os.getenv(f"{ENV_PREFIX}{name}", default))
 
 
 def _env_int(name: str, default: int) -> int:
-    return int(os.getenv(name, default))
+    return int(os.getenv(f"{ENV_PREFIX}{name}", default))
 
+
+_load_environment()
 
 # The only Groq model on the free tier that supports Structured Outputs in
 # strict mode, so the reply is always valid against our Pydantic schemas.
-MODEL = _env_str("PROMPT_OPTIMIZER_MODEL", "openai/gpt-oss-20b")
+MODEL = _env_str("MODEL", "openai/gpt-oss-20b")
 
 # Groq recommends 0.5-0.7 for gpt-oss. Lower values make it repeat itself.
-TEMPERATURE = _env_float("PROMPT_OPTIMIZER_TEMPERATURE", 0.6)
+TEMPERATURE = _env_float("TEMPERATURE", 0.6)
 
 # Groq's own default of 1024 tokens truncates long rewrites mid-sentence,
 # which breaks the strict-schema decode. gpt-oss is a reasoning model whose
 # hidden reasoning tokens count against this budget; at 4096 a long prompt
 # occasionally used it all and returned an empty reply, so 8192 gives headroom.
-MAX_TOKENS = _env_int("PROMPT_OPTIMIZER_MAX_TOKENS", 8192)
+MAX_TOKENS = _env_int("MAX_TOKENS", 8192)
 
 # 3 attempts total. Handles the free tier's rate limiting (HTTP 429) and
 # transient network errors.
-MAX_RETRIES = _env_int("PROMPT_OPTIMIZER_MAX_RETRIES", 3)
+MAX_RETRIES = _env_int("MAX_RETRIES", 3)
 
 # Per-request ceiling in seconds, so a stalled call cannot hang the terminal.
-REQUEST_TIMEOUT = _env_float("PROMPT_OPTIMIZER_TIMEOUT", 60.0)
+REQUEST_TIMEOUT = _env_float("TIMEOUT", 60.0)
 
 # Folder that holds one file per run. Overridable per run with --out.
-DEFAULT_OUTPUT_DIR = _env_str("PROMPT_OPTIMIZER_OUTPUT_DIR", "saved")
+DEFAULT_OUTPUT_DIR = _env_str("OUTPUT_DIR", "saved")
 
 
 def save_api_key(key: str, destination: Path = USER_CONFIG_FILE) -> Path:

@@ -11,6 +11,17 @@ from pathlib import Path
 from .config import DEFAULT_OUTPUT_DIR
 
 TIMESTAMP_FORMAT = "%Y%m%d-%H%M%S"
+OUTPUT_PREFIX = "optimized"
+
+
+def _timestamp(now: datetime | None) -> str:
+    return (now or datetime.now()).strftime(TIMESTAMP_FORMAT)
+
+
+def _filename(stamp: str, counter: int = 1) -> str:
+    """Return `optimized-<stamp>.md`, or a numbered variant for collisions."""
+    suffix = "" if counter == 1 else f"-{counter}"
+    return f"{OUTPUT_PREFIX}-{stamp}{suffix}.md"
 
 
 def new_output_path(
@@ -32,12 +43,12 @@ def new_output_path(
         A path like saved/optimized-20260927-143205.md.
     """
     folder = Path(directory)
-    stamp = (now or datetime.now()).strftime(TIMESTAMP_FORMAT)
-    candidate = folder / f"optimized-{stamp}.md"
+    stamp = _timestamp(now)
+    candidate = folder / _filename(stamp)
 
     counter = 2
     while candidate.exists():
-        candidate = folder / f"optimized-{stamp}-{counter}.md"
+        candidate = folder / _filename(stamp, counter)
         counter += 1
 
     return candidate

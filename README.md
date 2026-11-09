@@ -1,6 +1,6 @@
 # Prompt Optimizer
 
-> **Stop guessing. Start engineering.** A CLI tool that scores your prompt against 10 principles and rewrites it into a production-ready, structured prompt — powered by **Groq** (no credit card required).
+> **Stop guessing. Start engineering.** A CLI tool that scores your prompt against 10 principles and rewrites it into a production-ready, structured prompt — powered by **Groq**.
 
 [![CI](https://github.com/khadarbashajilan/prompt-optimizer-tool/actions/workflows/test.yml/badge.svg)](https://github.com/khadarbashajilan/prompt-optimizer-tool/actions)
 [![PyPI version](https://img.shields.io/pypi/v/prompt-optimizer-tool.svg)](https://pypi.org/project/prompt-optimizer-tool/)
@@ -11,48 +11,27 @@
 
 ---
 
-## Why I Built This
-
-Prompt engineering is no longer about trial and error — it's a discipline with repeatable patterns (role definition, output contracts, chain-of-thought, constraints). Most developers still write vague, unstructured prompts that leave LLMs guessing. This tool automates the optimization cycle:
-
-1. **Analyze** — identify exactly what's wrong with a prompt against 10 principles
-2. **Structure** — rewrite it with role, objective, context, step-by-step instructions, constraints, and output format
-3. **Iterate** — test the optimized prompt, refine, and repeat
-
-The goal is to make production-quality prompting accessible from the terminal.
-
 ## Architecture
 
 ```
-                    ┌──────────────┐
-                    │  principles  │  10 rules + both system prompts
-                    │     .py      │  (generated from one table)
-                    └──────┬───────┘
-                           │
-   ┌───────────┐   ┌───────┴────────┐   ┌────────────┐   ┌──────────┐
-   │  cli.py   │──▶│  analyzer.py   │──▶│   llm.py   │──▶│  Groq    │
-   │ Click+Rich│   │  optimizer.py │   │ ChatGroq + │   │  API     │
-   └─────┬─────┘   └───────┬────────┘   │ structured │   └──────────┘
-         │                 │            │  output    │
-         │            ┌────┴─────┐      └─────┬──────┘
-         │            │ schemas  │            │
-         │            │  .py     │      ┌─────┴──────┐
-         │            │ Pydantic │      │ config.py  │
-         │            └──────────┘      │ settings  │
-         │                              │  + API key│
-         ▼                              └────────────┘
-   ┌──────────┐
-   │ storage  │  one timestamped file per run, into saved/
-   │   .py    │
-   └──────────┘
+principles.py ──▶ prompts.py
+
+cli/ ──▶ analyzer.py / optimizer.py ──▶ llm.py ──▶ Groq API
+  │              │                        │
+  │              └──▶ schemas.py          └──▶ config.py
+  ▼
+storage.py
 ```
 
 | Module | Role |
 |---|---|
-| `cli.py` | Click entry point, Rich rendering, input gathering (arg / `--file` / stdin) |
+| `cli/` | Click entry point, input gathering (arg / `--file` / stdin), pipeline orchestration |
+| `cli/ui.py` | Rich console, colour helpers, and all report rendering |
+| `cli/errors.py` | Turns pipeline failures into actionable terminal messages |
 | `analyzer.py` | Step 1 — prompt + grading instructions → `PromptAnalysis` |
 | `optimizer.py` | Step 2 — prompt + analysis + rewrite instructions → `OptimizedPrompt` |
-| `principles.py` | The 10 rules as one table; both system prompts are generated from it |
+| `principles.py` | The 10 rules as one data table |
+| `prompts.py` | All LLM prompt text: both system prompts + human templates |
 | `schemas.py` | Pydantic contracts: `PromptWeakness`, `PromptAnalysis`, `OptimizedPrompt` |
 | `llm.py` | The only module that knows how to talk to Groq |
 | `config.py` | Every setting in one place, each overridable by env var |
@@ -99,14 +78,14 @@ Defined once in `principles.py` and reused everywhere:
 
 | Technology | Where Used | Purpose |
 |---|---|---|
-| **Groq** (`openai/gpt-oss-20b`) | `src/llm.py:35` | Powers both LLM calls via `ChatGroq`. Free tier, no credit card required |
-| **LangChain** (`ChatGroq`, `ChatPromptTemplate`) | `src/llm.py:61`, `src/analyzer.py:30`, `src/optimizer.py:31` | Provider abstraction, prompt templates, chain composition with LCEL |
-| **Structured Outputs** (`with_structured_output`) | `src/llm.py:61` | Groq's `json_schema` mode in **strict** mode uses constrained decoding, so every response matches the Pydantic schema — no JSON parse errors, and `Literal` fields can only return declared values |
-| **Pydantic v2** (`BaseModel`, `Field`) | `schemas.py:19-56` | Data contracts for `PromptWeakness`, `PromptAnalysis`, `OptimizedPrompt` — validation + serialization |
-| **Click** (`@click.group`, `@click.command`, `@click.option`) | `src/cli.py:233-270` | CLI framework with composable commands, argument parsing, and auto-generated `--help` |
-| **Rich** (`Console`, `Panel`, `Table`, `Markdown`, `Columns`) | `src/cli.py:53-137` | Terminal UI — color-coded score panels, weakness tables, markdown rendering, status spinners |
-| **python-dotenv** (`load_dotenv`) | `src/config.py:15` | Auto-loads `GROQ_API_KEY` from `.env` file — no manual config flags |
-| **pytest** (offline suite) | `tests/` | ~43 cases, no API key or network needed: CLI flow via `CliRunner`, the LLM seam with a fake provider, schemas, principles, config, storage |
+| **Groq** (`openai/gpt-oss-20b`) | `src/prompt_optimizer_tool/llm.py` | Powers both LLM calls via `ChatGroq`. Free tier available |
+| **LangChain** (`ChatGroq`, `ChatPromptTemplate`) | `src/prompt_optimizer_tool/llm.py`, `analyzer.py`, `optimizer.py` | Provider abstraction, prompt templates, chain composition with LCEL |
+| **Structured Outputs** (`with_structured_output`) | `src/prompt_optimizer_tool/llm.py` | Groq's `json_schema` mode in **strict** mode uses constrained decoding, so every response matches the Pydantic schema — no JSON parse errors, and `Literal` fields can only return declared values |
+| **Pydantic v2** (`BaseModel`, `Field`) | `src/prompt_optimizer_tool/schemas.py` | Data contracts for `PromptWeakness`, `PromptAnalysis`, `OptimizedPrompt` — validation + serialization |
+| **Click** (`@click.group`, `@click.command`, `@click.option`) | `src/prompt_optimizer_tool/cli/__init__.py` | CLI framework with composable commands, argument parsing, and auto-generated `--help` |
+| **Rich** (`Console`, `Panel`, `Table`, `Markdown`, `Columns`) | `src/prompt_optimizer_tool/cli/ui.py` | Terminal UI — color-coded score panels, weakness tables, markdown rendering, status spinners |
+| **python-dotenv** (`load_dotenv`) | `src/prompt_optimizer_tool/config.py` | Auto-loads `GROQ_API_KEY` from `.env` file — no manual config flags |
+| **pytest** (offline suite) | `tests/` | 80+ cases, no API key or network needed: CLI flow via `CliRunner`, the LLM seam with a fake provider, schemas, principles, config, storage, eval |
 | **uv** | `pyproject.toml` | Package manager — single `uv sync` installs deps, builds package, registers CLI entry point |
 | **Python 3.12** | `.python-version`, `pyproject.toml` | Type hints (`list[str]`, `dict[str, str]`), `str.removeprefix`/`removesuffix` |
 
@@ -125,7 +104,9 @@ uv tool install prompt-optimizer-tool
 pipx install prompt-optimizer-tool
 ```
 
-### Set your Groq API key (free, no credit card: https://console.groq.com/keys)
+### Set your Groq API key
+
+Get a key at <https://console.groq.com/keys>.
 
 ```bash
 # Interactive setup — saves key permanently to ~/.prompt-optimizer/config.env
@@ -143,22 +124,6 @@ cd prompt-optimizer-tool
 cp .env.example .env   # then edit .env: GROQ_API_KEY=gsk_your-key-here
 ./run.sh
 ```
-
-### Quick start
-
-```bash
-# Interactive menu — the easiest way in
-./run.sh
-
-# Or pass arguments straight through to the CLI
-./run.sh optimize "write code in python to fetch api data"
-./run.sh optimize --file prompt.txt
-./run.sh list
-```
-
-`./run.sh` with no arguments opens a menu: optimize a pasted prompt, optimize
-a file, list the 10 principles, show help, or quit. It verifies
-`GROQ_API_KEY` is set and creates the virtualenv on first run.
 
 ## Usage
 
@@ -213,67 +178,42 @@ The tool produces a structured report:
 - **Principles Applied** — which of the 10 principles were used
 - **Auto-save** — every run writes its own file to `saved/`, named for the date and time of the run, so results accumulate instead of overwriting
 
-## Limitations and Roadmap
-
-What this tool does **not** do yet, so expectations are clear:
-
-| Limitation | Current behavior | Fix |
-|---|---|---|
-| **No logging** | Errors print to the terminal only; no debug trail | Add structured logging (log file + `--debug` flag) |
-| **No caching** | Analyze + Optimize each hit the API on every run | Cache analyses by prompt hash to avoid repeat cost |
-| **No live-model tests** | The ~43 offline tests fake the provider seam only; real Groq structured-output calls are verified by hand | Add an opt-in integration test with a real key |
-| **No model fallback** | If the configured model is unavailable the run fails after retries | Add a second model to fall back to |
-| **Console only** | No way to diff a rewrite against its previous version | Add `--diff <file>` to compare two saved runs |
-| **No CI** | Checks only run locally | Add a GitHub Actions workflow |
-
-Planned next: logging, and an opt-in live-model integration test.
-
-## Key Design Decisions
-
-- **Structured Outputs in strict mode** — using `with_structured_output(Model, method="json_schema", strict=True)`. Groq's strict mode uses constrained decoding, so the response is guaranteed to match the Pydantic schema. Tool calling would be the alternative, but Groq does not support tool use together with Structured Outputs, and strict mode is the stronger guarantee.
-- **Constrained decoding doubles as validation** — because the decoder can only emit declared values, `Literal` fields (`severity`, `principle`, `principles_applied`) cannot come back as typos or invented names. This is what guarantees the "Principles Applied" panel can always resolve a principle, instead of silently rendering nothing when the model returns a name rather than a key.
-- **Closed schemas only** — strict mode requires every field to be required and every object to set `additionalProperties: false`. A free-form `dict[str, str]` collapses to an always-empty object under those rules, so `sections` is a `list[PromptSection]` (explicit `name` + `content`) instead.
-- **Model choice: `openai/gpt-oss-20b`** — ~1000 tokens/sec, and one of only three models supporting strict-mode Structured Outputs. The old `llama-3.x` ids are Enterprise-only now, so they are not free.
-- **`temperature=0.6`** — Groq recommends 0.5–0.7 for gpt-oss; the low values typical of deterministic chat models degrade into repetition and incoherent output on this model.
-- **`max_tokens=8192`** — Groq's default of 1024 completion tokens truncates long rewritten prompts, which breaks JSON parsing. The model's hidden reasoning also counts against this budget, and 4096 occasionally ran out before any JSON was written.
-- **One table, three consumers** — the 10 principles live in a single `PRINCIPLES` dict. The `list` command renders it, and both system prompts are generated from it. Previously the rules were hand-copied into both prompt strings, so editing a rule in one place silently left the other two stale.
-- **Keys, not names, cross the wire** — the LLM is asked for principle *keys* (`role`), and `principle_name()` maps a key to a display title at render time. Fewer tokens in the prompt, and lookups cannot fail.
-- **`config.py` owns every setting** — no `os.environ` reads and no magic numbers outside it. `llm.py` is the only module that knows how to reach Groq, so the two pipeline steps never construct a client themselves.
-- **One-way dependencies** — `cli` → `analyzer`/`optimizer` → `llm` → `config`, with `principles` and `schemas` at the bottom. The optimizer used to import its client from the analyzer, which inverted the natural reading order for no benefit.
-- Standard **src/ layout** — the package lives at `src/prompt_optimizer_tool/`, so setuptools auto-discovery applies with no path mapping, tests import the *installed* package, and the entry point is `prompt_optimizer_tool.cli:cli`.
-- **Failures exit non-zero** — `optimize` exits 1 when a step fails and 2 on missing input, so shell scripts and `run.sh` can trust the exit status instead of parsing output. A placeholder key fails the same way, before any tokens are spent.
-- **Untrusted content boundary** — the text being analyzed or rewritten is wrapped in `<prompt_to_analyze>` tags with an explicit "data, never instructions" instruction, because prompts can contain instructions themselves.
-- **Rich for DX** — color-coded severity, panel layouts, markdown rendering, and status spinners give instant visual feedback without a single HTML page.
-- **Config-free API Key** — `python-dotenv` loads `.env` automatically; no `--api-key` flag cluttering the interface.
-- **Zero-config Package Management** — `uv` handles deps, build, and entry point registration in one command.
-
-## Development
-
-```bash
-uv sync                 # install deps (includes the dev group with pytest)
-uv run pytest           # offline suite: no API key, no network
-uv run prompt-optimizer list
-```
-
-Use the venv directly if you prefer: `.venv/bin/python -m pytest`.
-
 ## Project Structure
 
 ```
 prompt-optimizer/
   pyproject.toml          # uv project config with entry point
   run.sh                  # bootstrap + interactive menu
+  CONTRIBUTING.md         # setup, tests, and PR guidelines
   .env.example            # GROQ_API_KEY template
   .gitignore
   src/
-    cli.py                # Click commands + Rich rendering
-    analyzer.py           # Step 1: grade a prompt
-    optimizer.py          # Step 2: rewrite it
-    principles.py         # 10 principles; generates both system prompts
-    schemas.py            # Pydantic contracts for structured I/O
-    llm.py                # the only module that talks to Groq
-    config.py             # all settings + API key loading
-    storage.py            # timestamped path per run, then write
+    prompt_optimizer_tool/
+      __init__.py         # package version + layering notes
+      cli/
+        __init__.py       # Click commands + pipeline orchestration
+        ui.py             # Rich console, renderers, colour helpers
+        errors.py         # user-facing error messages
+        __main__.py       # python -m prompt_optimizer_tool.cli
+      analyzer.py         # Step 1: grade a prompt
+      optimizer.py        # Step 2: rewrite it
+      principles.py       # 10 principles as data
+      prompts.py          # system prompts + human templates
+      schemas.py          # Pydantic contracts for structured I/O
+      llm.py              # the only module that talks to Groq
+      config.py           # all settings + API key loading
+      storage.py          # timestamped path per run, then write
+  eval/
+    run_eval.py           # stable entry point + facade
+    harness/              # internal harness modules
+      rubric.py           # rubric constants + section detection
+      prompt_io.py        # JSONL prompt loading
+      pipeline.py         # Row + analyze/optimize/rescore execution
+      metrics.py          # aggregation and headline metrics
+      report.py           # markdown/JSON rendering + writing
+    data/
+      prompts.jsonl       # 24 benchmark prompts
+    results/              # timestamped eval outputs
   tests/
     support.py            # FakeProvider + fresh-model factories
     conftest.py           # fixtures for the two test seams
@@ -292,7 +232,7 @@ prompt-optimizer/
 
 ## Evaluation Results
 
-Benchmark run across 10 real-world prompts on 2026-11-08 — full metrics, scores, and principle coverage:
+Benchmark run across 24 real-world prompts on 2026-11-08 (20 scored, 4 failed) — full metrics, scores, and principle coverage:
 
 📄 **[eval/results/20261108-220810.md](eval/results/20261108-220810.md)**
 
@@ -300,8 +240,10 @@ Benchmark run across 10 real-world prompts on 2026-11-08 — full metrics, score
 
 ## Contributing
 
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for setup, tests, code layout, and PR guidelines.
+
 1. Fork → branch → PR against `main`
-2. Run the offline test suite: `uv run pytest` — CI enforces **≥90% coverage**
+2. Run the offline test suite: `uv run pytest` — CI enforces **94% coverage**
 3. No API key needed for tests; the LLM seam is faked via `FakeProvider` in `tests/support.py`
 4. Run `prompt-optimizer setup` to configure your Groq key for manual testing
 
@@ -310,4 +252,3 @@ Benchmark run across 10 real-world prompts on 2026-11-08 — full metrics, score
 ## License
 
 [MIT](LICENSE)
-

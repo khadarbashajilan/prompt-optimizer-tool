@@ -27,7 +27,7 @@ from support import analysis, optimized
 from prompt_optimizer_tool.schemas import PromptSection
 
 ITEM = {"id": "t-1", "category": "coding", "prompt": "do the thing"}
-PROMPTS_FILE = Path(run_eval.__file__).with_name("prompts.jsonl")
+PROMPTS_FILE = Path(run_eval.__file__).with_name("data") / "prompts.jsonl"
 
 
 def scripted(scores: list[int], full_prompt: str = "Role: x\nObjective: y"):

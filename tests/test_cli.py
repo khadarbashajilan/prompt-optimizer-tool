@@ -13,9 +13,9 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from prompt_optimizer_tool import cli
-from prompt_optimizer_tool.config import MissingAPIKeyError
-from prompt_optimizer_tool.principles import PRINCIPLES
+from prompt_lint import cli
+from prompt_lint.config import MissingAPIKeyError
+from prompt_lint.principles import PRINCIPLES
 
 from support import optimized
 
@@ -89,12 +89,12 @@ def test_empty_input_is_a_usage_error_not_a_silent_success(
 def test_analysis_failure_exits_non_zero_and_writes_nothing(
     runner: CliRunner, pipeline, tmp_path: Path
 ) -> None:
-    pipeline.analysis_error = RuntimeError("groq is down")
+    pipeline.analysis_error = RuntimeError("provider is down")
 
     result = runner.invoke(cli.cli, ["optimize", RAW, "--out", str(tmp_path)])
 
     assert result.exit_code == 1
-    assert "groq is down" in result.output
+    assert "provider is down" in result.output
     assert written(tmp_path) == []
 
 
@@ -118,7 +118,7 @@ def test_missing_api_key_failure_exits_non_zero(
     result = runner.invoke(cli.cli, ["optimize", RAW, "--out", str(tmp_path)])
 
     assert result.exit_code == 1
-    assert "GROQ_API_KEY" in result.output
+    assert "API_KEY" in result.output
     assert written(tmp_path) == []
 
 
@@ -160,13 +160,13 @@ def test_every_severity_has_a_style() -> None:
 
 def rate_limit_error(retry_after: str | None) -> Exception:
     import httpx
-    from groq import RateLimitError
+    from litellm import RateLimitError
 
     headers = {"retry-after": retry_after} if retry_after else {}
     response = httpx.Response(
-        429, headers=headers, request=httpx.Request("POST", "https://api.groq.com")
+        429, headers=headers, request=httpx.Request("POST", "https://api.example.com")
     )
-    return RateLimitError("429 raw payload", response=response, body=None)
+    return RateLimitError("429 raw payload", llm_provider="test", model="m", response=response)
 
 
 @pytest.mark.parametrize("step", ["analysis_error", "optimize_error"])
@@ -178,7 +178,7 @@ def test_rate_limit_is_explained_with_the_wait_time(
     result = runner.invoke(cli.cli, ["optimize", RAW, "--out", str(tmp_path)])
 
     assert result.exit_code == 1
-    assert "free tier" in result.output
+    assert "Rate limit" in result.output
     assert "42 seconds" in result.output
     assert "429 raw payload" not in result.output
     assert written(tmp_path) == []
@@ -194,28 +194,79 @@ def test_rate_limit_without_retry_after_still_gives_advice(
     assert "Wait a minute" in result.output
 
 
-def test_setup_saves_key_interactively(
+def test_setup_saves_model_and_key(
     runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     dest = tmp_path / "config.env"
-    monkeypatch.setattr(cli, "save_api_key", lambda key: dest)
+    saved: dict = {}
+    monkeypatch.setattr(cli, "required_env_vars", lambda model: ["OPENAI_API_KEY"])
+    monkeypatch.setattr(cli, "save_settings", lambda values: saved.update(values) or dest)
 
-    result = runner.invoke(cli.cli, ["setup"], input="gsk_new_secret_key\n")
+    result = runner.invoke(cli.cli, ["setup"], input="openai/gpt-4o-mini\nsk_new_secret\n")
 
     assert result.exit_code == 0
     assert "Success!" in result.output
-    assert str(dest) in result.output
+    assert saved == {"PLINT_MODEL": "openai/gpt-4o-mini", "OPENAI_API_KEY": "sk_new_secret"}
 
 
-def test_setup_rejects_empty_key(runner: CliRunner) -> None:
-    result = runner.invoke(cli.cli, ["setup"], input="\n")
+def test_setup_local_model_needs_no_key(
+    runner: CliRunner, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(cli, "required_env_vars", lambda model: [])
+    monkeypatch.setattr(cli, "save_settings", lambda values: tmp_path / "c.env")
+
+    result = runner.invoke(cli.cli, ["setup"], input="ollama/llama3.1\n")
+
+    assert result.exit_code == 0
+    assert "No API key needed" in result.output
+
+
+def test_setup_rejects_empty_key(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "required_env_vars", lambda model: ["OPENAI_API_KEY"])
+
+    result = runner.invoke(cli.cli, ["setup"], input="openai/gpt-4o-mini\n\n")
 
     assert result.exit_code == 1
     assert "No API key provided" in result.output
 
 
-def test_setup_rejects_placeholder_key(runner: CliRunner) -> None:
-    result = runner.invoke(cli.cli, ["setup"], input="your-groq-api-key-here\n")
+def test_setup_rejects_placeholder_key(runner: CliRunner, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "required_env_vars", lambda model: ["OPENAI_API_KEY"])
+
+    result = runner.invoke(cli.cli, ["setup"], input="openai/gpt-4o-mini\nyour-api-key-here\n")
 
     assert result.exit_code == 1
     assert "Placeholder keys cannot be used" in result.output
+
+
+def test_authentication_error_points_to_setup(runner: CliRunner, pipeline, tmp_path: Path) -> None:
+    from litellm import AuthenticationError
+
+    pipeline.analysis_error = AuthenticationError("bad key", llm_provider="test", model="m")
+
+    result = runner.invoke(cli.cli, ["optimize", RAW, "--out", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "plint setup" in result.output
+
+
+def test_bare_prompt_defaults_to_optimize(runner: CliRunner, pipeline, tmp_path: Path) -> None:
+    result = runner.invoke(cli.cli, [RAW, "--out", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert pipeline.prompts == [RAW]
+
+
+def test_bare_file_option_defaults_to_optimize(runner: CliRunner, pipeline, tmp_path: Path) -> None:
+    source = tmp_path / "p.txt"
+    source.write_text(RAW, encoding="utf-8")
+
+    result = runner.invoke(cli.cli, ["--file", str(source), "--out", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert pipeline.prompts == [RAW]
+
+
+def test_subcommands_still_work(runner: CliRunner) -> None:
+    assert runner.invoke(cli.cli, ["list"]).exit_code == 0
+    assert "optimize" in runner.invoke(cli.cli, ["--help"]).output

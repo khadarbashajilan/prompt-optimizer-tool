@@ -19,9 +19,9 @@ from dataclasses import dataclass, field
 import pytest
 from click.testing import CliRunner
 
-from prompt_optimizer_tool import analyzer, cli, optimizer
-from prompt_optimizer_tool.config import MissingAPIKeyError
-from prompt_optimizer_tool.schemas import PromptAnalysis
+from prompt_lint import analyzer, cli, optimizer
+from prompt_lint.config import MissingAPIKeyError
+from prompt_lint.schemas import PromptAnalysis
 
 from support import FakeProvider, analysis, optimized
 
@@ -88,6 +88,5 @@ def pipeline(monkeypatch: pytest.MonkeyPatch) -> FakePipeline:
 def placeholder_error() -> MissingAPIKeyError:
     """The actionable error a placeholder key must produce."""
     return MissingAPIKeyError(
-        "GROQ_API_KEY is still the placeholder from .env.example. "
-        "Replace it with a real key: https://console.groq.com/keys"
+        "GEMINI_API_KEY is still a placeholder value. Replace it with a real key."
     )

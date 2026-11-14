@@ -2,15 +2,15 @@
 
 These tests drive the real ``ChatPromptTemplate | structured_llm(schema)``
 composition with the provider faked, so the assertions are on the exact
-messages that would have reached Groq. Nothing here touches the network.
+messages that would have reached the provider. Nothing here touches the network.
 """
 
 import json
 
-from prompt_optimizer_tool.analyzer import analyze_prompt
-from prompt_optimizer_tool.optimizer import optimize_prompt
-from prompt_optimizer_tool.principles import PRINCIPLES, PrincipleKey
-from prompt_optimizer_tool.schemas import OptimizedPrompt, PromptAnalysis
+from prompt_lint.analyzer import analyze_prompt
+from prompt_lint.optimizer import optimize_prompt
+from prompt_lint.principles import PRINCIPLES, PrincipleKey
+from prompt_lint.schemas import OptimizedPrompt, PromptAnalysis
 
 from support import FakeProvider, analysis, optimized
 
@@ -105,7 +105,7 @@ def test_generated_prompts_carry_every_principle(provider: FakeProvider) -> None
     """Both system prompts are generated from the table; prove the generation ran.
 
     A principle added to the table but not rendered into a prompt would be
-    invisible to the model while still looking correct in `prompt-optimizer list`.
+    invisible to the model while still looking correct in `plint list`.
     """
     analyze_prompt(RAW)
     optimize_prompt(RAW, analysis())

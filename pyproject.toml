@@ -6,15 +6,15 @@ requires = ["setuptools>=75.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prompt-optimizer-tool"
+name = "prompt-lint"
 version = "0.1.5"
-description = "CLI tool that grades prompts 0-100 against 10 engineering principles and rewrites them, powered by Groq"
+description = "CLI tool that grades prompts 0-100 against 10 engineering principles and rewrites them, with any LLM provider via LiteLLM"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "khadar", email = "khadarbashajilan001@gmail.com" }]
 requires-python = ">=3.12"
-keywords = ["prompt", "prompt-engineering", "llm", "groq", "langchain", "cli"]
+keywords = ["prompt", "prompt-engineering", "llm", "litellm", "cli"]
 classifiers = [
     "Environment :: Console",
     "Programming Language :: Python :: 3.12",
@@ -22,12 +22,12 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
-    "langchain-groq>=1.1.0",
     "langchain-core>=0.3.0",
     "rich>=13.0.0",
     "click>=8.0.0",
     "python-dotenv>=1.0.0",
     "pydantic>=2.0.0",
+    "litellm>=1.50.0",
 ]
 
 [project.urls]
@@ -35,7 +35,7 @@ Homepage = "https://github.com/khadarbashajilan/prompt-optimizer-tool"
 Issues = "https://github.com/khadarbashajilan/prompt-optimizer-tool/issues"
 
 [project.scripts]
-prompt-optimizer = "prompt_optimizer_tool.cli:cli"
+plint = "prompt_lint.cli:cli"
 
 [dependency-groups]
 dev = ["pytest>=8.0.0", "pytest-cov>=6.0.0"]

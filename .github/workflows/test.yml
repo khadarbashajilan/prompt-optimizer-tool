@@ -22,9 +22,9 @@ jobs:
       - name: Offline test suite, no API key needed
         run: |
           uv run pytest -q \
-            --cov=prompt_optimizer_tool \
+            --cov=prompt_lint \
             --cov-report=term \
             --cov-fail-under=94
 
       - name: CLI smoke test (no network)
-        run: uv run prompt-optimizer list
+        run: uv run plint list

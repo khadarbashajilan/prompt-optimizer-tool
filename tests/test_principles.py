@@ -4,12 +4,12 @@ The dict keys, the PrincipleKey Literal, and both generated system prompts
 must never drift apart. These tests pin the table to the prompt builder.
 """
 
-from prompt_optimizer_tool.principles import (
+from prompt_lint.principles import (
     PRINCIPLES,
     PrincipleKey,
     principle_name,
 )
-from prompt_optimizer_tool.prompts import (
+from prompt_lint.prompts import (
     ANALYSIS_SYSTEM_PROMPT,
     OPTIMIZER_SYSTEM_PROMPT,
 )

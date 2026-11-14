@@ -17,4 +17,4 @@ This module deliberately has no side effects: it must stay importable
 without a configured API key, and importing it must not load .env.
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"

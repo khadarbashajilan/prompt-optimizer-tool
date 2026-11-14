@@ -24,7 +24,7 @@ from run_eval import (
     write_results,
 )
 from support import analysis, optimized
-from prompt_optimizer_tool.schemas import PromptSection
+from prompt_lint.schemas import PromptSection
 
 ITEM = {"id": "t-1", "category": "coding", "prompt": "do the thing"}
 PROMPTS_FILE = Path(run_eval.__file__).with_name("data") / "prompts.jsonl"
@@ -230,12 +230,12 @@ class TestRenderAndWrite:
 
 class TestMain:
     def test_refuses_to_run_without_a_key(self, monkeypatch, capsys):
-        monkeypatch.delenv("GROQ_API_KEY", raising=False)
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         assert run_eval.main(["--limit", "1"]) == 1
-        assert "GROQ_API_KEY" in capsys.readouterr().err
+        assert "GEMINI_API_KEY" in capsys.readouterr().err
 
     def test_end_to_end_with_fake_pipeline(self, monkeypatch, tmp_path, capsys, provider):
-        monkeypatch.setenv("GROQ_API_KEY", "gsk_real_looking_key")
+        monkeypatch.setenv("GEMINI_API_KEY", "gsk_real_looking_key")
         code = run_eval.main(["--limit", "2", "--delay", "0", "--out", str(tmp_path)])
         assert code == 0
         assert len(list(tmp_path.glob("*.json"))) == 1
@@ -243,7 +243,7 @@ class TestMain:
         assert "[coding-01]" in capsys.readouterr().out
 
     def test_empty_prompt_file_fails(self, monkeypatch, tmp_path, capsys):
-        monkeypatch.setenv("GROQ_API_KEY", "gsk_real_looking_key")
+        monkeypatch.setenv("GEMINI_API_KEY", "gsk_real_looking_key")
         empty = tmp_path / "empty.jsonl"
         empty.write_text("", encoding="utf-8")
         assert run_eval.main(["--prompts", str(empty), "--out", str(tmp_path)]) == 1

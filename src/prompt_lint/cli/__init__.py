@@ -17,7 +17,14 @@ from rich.rule import Rule
 from rich.traceback import install as install_traceback
 
 from ..analyzer import analyze_prompt
-from ..config import DEFAULT_OUTPUT_DIR, MissingAPIKeyError, PLACEHOLDER_KEYS, save_api_key
+from ..config import (
+    DEFAULT_OUTPUT_DIR,
+    MODEL,
+    MissingAPIKeyError,
+    is_placeholder,
+    required_env_vars,
+    save_settings,
+)
 from ..optimizer import optimize_prompt
 from ..storage import new_output_path, write_output
 from .errors import describe_error
@@ -30,9 +37,9 @@ from .ui import (
     severity_style,
 )
 
-USAGE_HINT = """Usage: prompt-optimizer optimize [PROMPT]
-   or: prompt-optimizer optimize --file prompt.txt
-   or: cat prompt.txt | prompt-optimizer optimize"""
+USAGE_HINT = """Usage: plint optimize [PROMPT]
+   or: plint optimize --file prompt.txt
+   or: cat prompt.txt | plint optimize"""
 
 
 def read_prompt(prompt: str | None, filepath: str | None) -> str:
@@ -116,10 +123,19 @@ def run(prompt: str, output_dir: str) -> Path | None:
     return path
 
 
-@click.group(invoke_without_command=True)
+class DefaultToOptimize(click.Group):
+    """Treat `plint "text"` and `plint -f file` as `plint optimize ...`."""
+
+    def parse_args(self, ctx: click.Context, args: list[str]) -> list[str]:
+        if args and args[0] not in self.commands and args[0] not in ctx.help_option_names:
+            args = ["optimize", *args]
+        return super().parse_args(ctx, args)
+
+
+@click.group(cls=DefaultToOptimize, invoke_without_command=True)
 @click.pass_context
 def cli(ctx: click.Context) -> None:
-    """Prompt Optimizer — analyze and rewrite prompts following best practices.
+    """plint — analyze and rewrite prompts following best practices.
 
     Analyzes a prompt against 10 engineering principles, scores it 0-100,
     identifies weaknesses, and rewrites it into a structured prompt.
@@ -129,11 +145,11 @@ def cli(ctx: click.Context) -> None:
 
     Examples:
 
-        prompt-optimizer optimize "write code to fetch API data"
+        plint "write code to fetch API data"
 
-        prompt-optimizer optimize --file prompt.txt
+        plint --file prompt.txt
 
-        echo "explain AI" | prompt-optimizer optimize
+        echo "explain AI" | plint
     """
     install_traceback(console=console, show_locals=False)
     if ctx.invoked_subcommand is None:
@@ -171,20 +187,30 @@ def list_principles() -> None:
 
 @cli.command(name="setup")
 def setup() -> None:
-    """Configure your Groq API key interactively."""
+    """Choose a model and configure its API key interactively."""
     console.print(Panel(
-        "A free Groq API key is required (no credit card needed).\n"
-        "Get your key at: [bold cyan]https://console.groq.com/keys[/bold cyan]",
-        title="[brand]Prompt Optimizer Setup[/brand]",
+        "Any LiteLLM model works: gemini/gemini-2.5-flash, openai/gpt-4o-mini,\n"
+        "anthropic/claude-sonnet-4-5, ollama/llama3.1, ...\n"
+        "Provider list: [bold cyan]https://docs.litellm.ai/docs/providers[/bold cyan]",
+        title="[brand]plint Setup[/brand]",
         border_style="cyan",
     ))
-    key = click.prompt("Enter your Groq API key", default="", hide_input=True, show_default=False).strip()
-    if not key:
-        console.print("[bad]Error:[/bad] No API key provided.")
-        sys.exit(1)
-    if key in PLACEHOLDER_KEYS:
-        console.print("[bad]Error:[/bad] Placeholder keys cannot be used.")
-        sys.exit(1)
+    model = click.prompt("Model", default=MODEL).strip()
+    values = {"PLINT_MODEL": model}
 
-    path = save_api_key(key)
-    console.print(f"[good]Success![/good] API key saved to [bold]{path}[/bold]")
+    needed = required_env_vars(model)
+    if needed:
+        name = needed[0]
+        key = click.prompt(f"Enter your {name}", default="", hide_input=True, show_default=False).strip()
+        if not key:
+            console.print("[bad]Error:[/bad] No API key provided.")
+            sys.exit(1)
+        if is_placeholder(key):
+            console.print("[bad]Error:[/bad] Placeholder keys cannot be used.")
+            sys.exit(1)
+        values[name] = key
+    else:
+        console.print("[dim]No API key needed (or already set in your environment).[/dim]")
+
+    path = save_settings(values)
+    console.print(f"[good]Success![/good] Settings saved to [bold]{path}[/bold]")

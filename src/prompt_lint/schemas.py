@@ -1,6 +1,6 @@
 """Pydantic models describing what the LLM is allowed to return.
 
-These schemas double as validation and as the contract for Groq's strict
+These schemas double as validation and as the contract for the provider's strict
 structured output, so the fields below are the tool's real API. Enumerated
 fields use Literal rather than str: that way the LLM cannot invent a
 severity the terminal does not know how to colour, and it cannot return a

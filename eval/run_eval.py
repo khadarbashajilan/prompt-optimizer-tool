@@ -12,7 +12,7 @@ HONEST FRAMING: the scorer and the rewriter are the same model, so the
 score lift is a self-consistency proxy, not an independent measure of
 quality. The section coverage is the one objective, model-free number here.
 
-Usage (needs GROQ_API_KEY and network access):
+Usage (needs provider credentials and network access):
 
     uv run python eval/run_eval.py
     uv run python eval/run_eval.py --limit 4 --delay 3 --out eval/results
@@ -64,7 +64,7 @@ def _write_results(
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Evaluate prompt-optimizer on a prompt set.")
+    parser = argparse.ArgumentParser(description="Evaluate plint on a prompt set.")
     parser.add_argument("--prompts", type=Path, default=DEFAULT_PROMPTS, help="JSONL prompt file.")
     parser.add_argument("--limit", type=int, default=None, help="Only run the first N prompts.")
     parser.add_argument(
@@ -81,12 +81,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
     # Imported here so --help and the unit tests never need an API key.
-    from prompt_optimizer_tool.analyzer import analyze_prompt
-    from prompt_optimizer_tool.config import MODEL, MissingAPIKeyError, api_key
-    from prompt_optimizer_tool.optimizer import optimize_prompt
+    from prompt_lint.analyzer import analyze_prompt
+    from prompt_lint.config import MODEL, MissingAPIKeyError, ensure_credentials
+    from prompt_lint.optimizer import optimize_prompt
 
     try:
-        api_key()
+        ensure_credentials()
     except MissingAPIKeyError as error:
         print(f"Error: {error}", file=sys.stderr)
         return 1

@@ -12,17 +12,34 @@ uv sync --all-groups
 
 Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
+## Code layout
+
+```
+src/prompt_lint/
+  cli/          Click commands, terminal rendering, error messages
+  analyzer.py   prompt -> PromptAnalysis (score, strengths, weaknesses)
+  optimizer.py  prompt + analysis -> OptimizedPrompt
+  llm.py        the only module that calls the provider (via LiteLLM)
+  config.py     settings, credential checks, saved config
+  prompts.py    prompt templates; principles.py: the 10 principles
+  schemas.py    Pydantic models the LLM reply must match
+  storage.py    timestamped output files
+eval/           benchmark harness (needs a real API key)
+tests/          offline tests; the LLM is always faked
+media/          demo.gif and make_demo.py, which records the real CLI into it
+```
+
 ## Tests
 
 ```bash
 uv run pytest
-uv run pytest --cov=prompt_optimizer_tool --cov-report=term-missing
+uv run pytest --cov=prompt_lint --cov-report=term-missing
 ```
 
 The tests are offline — no API key needed. CI requires **94% coverage**, so add
 tests for new behaviour.
 
-For manual testing, run `uv run prompt-optimizer setup` to configure a Groq key.
+For manual testing, run `uv run plint setup` (or export `PLINT_MODEL` and the key) to pick a model and configure its key.
 
 ## Pull requests
 
@@ -40,8 +57,7 @@ your OS/Python/version. Redact API keys and private prompt content.
 
 ## Secrets
 
-Never commit a real API key or `.env` file. If a key leaks, revoke it at
-<https://console.groq.com/keys>.
+Never commit a real API key or `.env` file. If a key leaks, revoke it with your provider.
 
 ## License
 

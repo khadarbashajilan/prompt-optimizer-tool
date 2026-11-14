@@ -1,13 +1,13 @@
 """The Pydantic contracts, which double as the structured-output schema.
 
-Groq's strict mode forces every reply through these models, so a constraint
+Strict structured output forces every reply through these models, so a constraint
 that is not validated here is a constraint nothing enforces at runtime.
 """
 
 import pytest
 
-from prompt_optimizer_tool.principles import PRINCIPLES
-from prompt_optimizer_tool.schemas import OptimizedPrompt, PromptAnalysis, PromptWeakness
+from prompt_lint.principles import PRINCIPLES
+from prompt_lint.schemas import OptimizedPrompt, PromptAnalysis, PromptWeakness
 
 from support import analysis, optimized
 
